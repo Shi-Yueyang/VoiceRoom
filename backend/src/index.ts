@@ -45,9 +45,24 @@ io.on('connection', (socket) => {
     console.log('user disconnected:', socket.id);
     io.emit('chat message', `User ${socket.id.substr(0, 5)} left the chat`);
   });
+
+  socket.on('webrtc_offer', (offer) => {
+    console.log('Received webrtc_offer:', offer);
+    socket.broadcast.emit('webrtc_offer', offer);
+  });
+
+  socket.on('webrtc_answer', (answer) => {
+    console.log('Received webrtc_answer:', answer);
+    socket.broadcast.emit('webrtc_answer', answer);
+  });
+
+  socket.on('webrtc_ice_candidate', (candidate) => {
+    console.log('Received webrtc_ice_candidate:', candidate);
+    socket.broadcast.emit('webrtc_ice_candidate', candidate);
+  });
 });
 
-// Start the server 
+// Start the server
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Socket.IO demo available at http://localhost:${PORT}/demo`);

@@ -1,10 +1,12 @@
 import ChatRoom from "./components/ChatRoom"
+import VoiceChat from "./components/VoiceChat"
 
 function App() {
 
   return (
     <>
-    <ChatRoom />
+    {/* <ChatRoom /> */}
+    <VoiceChat />
     </>
   )
 }
