@@ -62,8 +62,8 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start the server
-server.listen(PORT, () => {
+// Start the server 
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Socket.IO demo available at http://localhost:${PORT}/demo`);
 });
