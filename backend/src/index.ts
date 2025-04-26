@@ -2,6 +2,9 @@ import express, { Request, Response } from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
+import { initializeEditingHandler } from './editingNamespace'; // Editing logic
+import { initializeChatHandler } from './chatHandler';         // Chat logic
+import { initializeWebRTCHandler } from './webrtcHandler';       // WebRTC logic
 
 const app = express();
 const server = http.createServer(app);
@@ -24,43 +27,9 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 
-// Socket.IO connection handling
-io.on('connection', (socket) => {
-  console.log('a user connected:', socket.id);
-  
-  // Send a welcome message to the connected client
-  socket.emit('chat message', 'Welcome to the chat demo!');
-  
-  // Broadcast to all clients except the sender
-  socket.broadcast.emit('chat message', `User ${socket.id.substr(0, 5)} joined the chat`);
-  
-  // Handle chat messages
-  socket.on('chat message', (msg) => {
-    console.log(`message from ${socket.id}: ${msg}`);
-    io.emit('chat message', `${socket.id.substr(0, 5)}: ${msg}`);
-  });
-  
-  // Handle disconnection
-  socket.on('disconnect', () => {
-    console.log('user disconnected:', socket.id);
-    io.emit('chat message', `User ${socket.id.substr(0, 5)} left the chat`);
-  });
-
-  socket.on('webrtc_offer', (offer) => {
-    console.log('Received webrtc_offer:', offer);
-    socket.broadcast.emit('webrtc_offer', offer);
-  });
-
-  socket.on('webrtc_answer', (answer) => {
-    console.log('Received webrtc_answer:', answer);
-    socket.broadcast.emit('webrtc_answer', answer);
-  });
-
-  socket.on('webrtc_ice_candidate', (candidate) => {
-    console.log('Received webrtc_ice_candidate:', candidate);
-    socket.broadcast.emit('webrtc_ice_candidate', candidate);
-  });
-});
+initializeChatHandler(io); 
+initializeWebRTCHandler(io);  
+initializeEditingHandler(io); 
 
 // Start the server 
 server.listen(PORT, '0.0.0.0', () => {

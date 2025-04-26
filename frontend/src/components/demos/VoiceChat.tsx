@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 
-const BACKEND_URL = "http://localhost:3001";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
 
 const VoiceChat: React.FC = () => {
   const [isCalling, setIsCalling] = useState(false);
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [_localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [_remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const socketRef = useRef<any>(null);
@@ -45,6 +45,8 @@ const VoiceChat: React.FC = () => {
   }, []);
 
   const startCall = async () => {
+    console.log(navigator.mediaDevices);
+
     setIsCalling(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({

@@ -1,12 +1,11 @@
-import ChatRoom from "./components/ChatRoom"
-import VoiceChat from "./components/VoiceChat"
+
+import MultiUserEditing from "./components/demos/MultiUserEditing"
 
 function App() {
 
   return (
     <>
-    {/* <ChatRoom /> */}
-    <VoiceChat />
+    <MultiUserEditing />
     </>
   )
 }
