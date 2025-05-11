@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import {
   Box,
   AppBar,
@@ -25,8 +25,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import ScriptContainer, { ScriptBlock } from "../components/ScriptContainer";
 import { arrayMove } from "@dnd-kit/sortable";
 
-
-
 interface ScriptEditorScreenProps {
   scriptId: string;
   initialScriptData: ScriptBlock[];
@@ -37,7 +35,7 @@ interface ScriptEditorScreenProps {
 // Define block types for the Add Element modal
 const BLOCK_TYPES: ScriptBlock["type"][] = [
   "sceneHeading",
-  "action",
+  "description",
   "character",
   "dialogue",
   "parenthetical",
@@ -63,12 +61,12 @@ const CharacterPanelScreen = ({ onClose }: { onClose: () => void }) => (
   </Box>
 );
 
-const ScriptEditorScreen: React.FC<ScriptEditorScreenProps> = ({
+const ScriptEditorScreen = ({
   scriptId,
   initialScriptData,
   onSaveScript,
   onOpenSettings,
-}) => {
+}: ScriptEditorScreenProps) => {
   // --- State Management ---
   const [scriptBlocks, setScriptBlocks] = useState<ScriptBlock[]>([]);
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
@@ -110,7 +108,6 @@ const ScriptEditorScreen: React.FC<ScriptEditorScreenProps> = ({
   };
 
   const handleAddBlock = (type: ScriptBlock["type"]) => {
-    // Create a new block with unique ID
     const newBlock: ScriptBlock = {
       id: `block-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       type,
@@ -145,9 +142,9 @@ const ScriptEditorScreen: React.FC<ScriptEditorScreenProps> = ({
     console.log("Script saved:", scriptId);
   };
   const handleRearrangeBlocks = (oldIndex: number, newIndex: number) => {
-    setScriptBlocks(prevBlocks => arrayMove(prevBlocks, oldIndex, newIndex));
+    setScriptBlocks((prevBlocks) => arrayMove(prevBlocks, oldIndex, newIndex));
   };
-  
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       {/* Header */}
@@ -199,12 +196,10 @@ const ScriptEditorScreen: React.FC<ScriptEditorScreenProps> = ({
           onSelectBlock={handleSelectBlock}
           onEditBlockText={handleEditText}
           onDeleteBlock={handleDeleteBlock}
-          onAddBlock={(type, afterId) => {
-            // Simplified version - always adds after active block
+          onAddBlock={(type, _afterId) => {
             handleAddBlock(type);
           }}
           onRearrangeBlocks={handleRearrangeBlocks}
-
         />
       </Box>
 
@@ -255,7 +250,7 @@ const ScriptEditorScreen: React.FC<ScriptEditorScreenProps> = ({
                     secondary={
                       type === "sceneHeading"
                         ? "Where the scene takes place"
-                        : type === "action"
+                        : type === "description"
                         ? "Describe what happens"
                         : type === "character"
                         ? "Who is speaking"

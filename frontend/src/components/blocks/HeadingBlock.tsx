@@ -1,48 +1,49 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Box,
   Typography,
   IconButton,
-  TextareaAutosize,
   Stack,
   ToggleButtonGroup,
   ToggleButton,
   TextField,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import SuggestionsList from "./SuggestionsList";
 
-interface SceneHeadingBlockProps {
+export interface HeadingBlockParam {
+  intExt: string;
+  location: string;
+  time: string;
+}
+
+interface HeadingBlockProps {
   id: string;
-  text: string;
+  blockParams?: HeadingBlockParam;
   isActive: boolean;
   onSelect: (id: string) => void;
   onEditText: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
 }
 
-const SceneHeadingBlock: React.FC<SceneHeadingBlockProps> = ({
+const SceneHeadingBlock = ({
   id,
-  text,
+  blockParams: headingBlockParams,
   isActive,
   onSelect,
-  onEditText,
   onDelete,
-}) => {
+}: HeadingBlockProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(isActive);
-  const [currentType, setCurrentType] = useState<string>("INT.");
-  const [showPlaceSuggestions, setShowPlaceSuggestions] = useState(false);
-
-  const [currentText, setCurrentText] = useState<string>(text);
+  const [intExt, setIntExt] = useState<string>(headingBlockParams?.intExt || "INT.");
+  const [location, setLocation] = useState<string>(headingBlockParams?.location || "");
+  const [time, setTime] = useState<string>(headingBlockParams?.time || "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Update internal state when isActive prop changes
+  const timeInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (isActive) {
       setIsEditing(true);
-      setCurrentText(text);
 
-      // Focus the textarea when it becomes active
       setTimeout(() => {
         if (textareaRef.current) {
           textareaRef.current.focus();
@@ -51,7 +52,7 @@ const SceneHeadingBlock: React.FC<SceneHeadingBlockProps> = ({
     } else {
       setIsEditing(false);
     }
-  }, [isActive, text]);
+  }, [isActive, headingBlockParams]);
 
   // Handle click on the box (to select/activate)
   const handleClick = () => {
@@ -59,7 +60,6 @@ const SceneHeadingBlock: React.FC<SceneHeadingBlockProps> = ({
       onSelect(id);
     }
   };
-
 
   // Handle delete button click
   const handleDelete = (e: React.MouseEvent) => {
@@ -91,12 +91,15 @@ const SceneHeadingBlock: React.FC<SceneHeadingBlockProps> = ({
           minHeight: "56px",
         },
       }}
+      
     >
       {isEditing ? (
-        <Stack spacing={2} sx={{ width: "100%" }}>
+        <Stack spacing={2} sx={{ width: "100%" }} >
           <ToggleButtonGroup
-            value={currentType}
-            onChange={(_e, newType) => {setCurrentType(newType);}}
+            value={intExt}
+            onChange={(_e, newType) => {
+              setIntExt(newType);
+            }}
             exclusive
             aria-label="scene location type"
             size="small"
@@ -119,28 +122,45 @@ const SceneHeadingBlock: React.FC<SceneHeadingBlockProps> = ({
             </ToggleButton>
           </ToggleButtonGroup>
 
-          <Box sx={{ position: 'relative' }}>
-          <TextField
+          <Box sx={{ position: "relative" }}>
+            <TextField
               label="地点"
-              value={'currentPlace'}
-              onChange={()=>{}}
-              onFocus={()=>{setShowPlaceSuggestions(true);}}
-              onBlur={()=>{setShowPlaceSuggestions(false);}}
+              value={location}
+              onChange={(e) => {
+                setLocation(e.target.value);
+              }}
               fullWidth
               size="small"
               sx={{
-                '.MuiInputBase-input': { // Target the actual input element
-                  fontFamily: 'Courier New, monospace',
-                  textTransform: 'uppercase',
-                  fontWeight: 'bold',
+                ".MuiInputBase-input": {
+                  // Target the actual input element
+                  fontFamily: "Courier New, monospace",
+                  textTransform: "uppercase",
+                  fontWeight: "bold",
                 },
               }}
             />
-          <SuggestionsList 
-            show={showPlaceSuggestions}
-            suggestions={['filteredPlaceSuggestions']}
-            onSelectSuggestion={()=> {}}
-          />
+          </Box>
+
+          <Box sx={{ position: "relative" }}>
+            <TextField
+              inputRef={timeInputRef}
+              label="时间"
+              value={time}
+              onChange={(e) => {
+                setTime(e.target.value);
+              }}
+              fullWidth
+              size="small"
+              sx={{
+                ".MuiInputBase-input": {
+                  // Target the actual input element
+                  fontFamily: "Courier New, monospace",
+                  textTransform: "uppercase",
+                  fontWeight: "bold",
+                },
+              }}
+            />
           </Box>
         </Stack>
       ) : (
@@ -157,7 +177,7 @@ const SceneHeadingBlock: React.FC<SceneHeadingBlockProps> = ({
             },
           }}
         >
-          {text}
+          {intExt} - {location} - {time}
         </Typography>
       )}
 

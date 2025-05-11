@@ -6,18 +6,30 @@ const mockScriptData: ScriptBlock[] = [
   {
     id: 'block-1',
     type: 'sceneHeading',
-    text: 'EXT. COFFEE SHOP - DAY'
+    text: 'EXT. COFFEE SHOP - DAY',
+    blockParams: {
+      intExt: 'EXT',
+      location: 'COFFEE SHOP',
+      time: 'DAY'
+    }
   },
   {
     id: 'block-2',
-    type: 'action',
-    text: 'John enters the coffee shop, looking around nervously.'
+    type: 'description',
+    text:'',
+    blockParams: {
+      text: 'John enters the coffee shop, looking around nervously.'
+    }
   },
 
   {
     id: 'block-4',
     type: 'dialogue',
-    text: 'Is this seat taken?'
+    text: 'Is this seat taken?',
+    blockParams: {
+      characterName: 'John',
+      text: 'Is this seat taken? lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    }
   }
 ];
 
