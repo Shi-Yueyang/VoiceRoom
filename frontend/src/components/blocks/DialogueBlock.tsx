@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Box, Typography, IconButton, TextareaAutosize, TextField } from "@mui/material";
+import {
+  Box,
+  Typography,
+  IconButton,
+  TextareaAutosize,
+  TextField,
+} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 export interface DialogueBlockParam {
@@ -16,22 +22,22 @@ interface DialogueBlockProps {
   onDelete: (id: string) => void;
 }
 
-const DialogueBlock: React.FC<DialogueBlockProps> = ({
+const DialogueBlock = ({
   id,
   blockParams,
   isActive,
   onSelect,
-  onEditText,
   onDelete,
-}) => {
+}: DialogueBlockProps) => {
   // Component state
   const [isEditing, setIsEditing] = useState<boolean>(isActive);
   const [characterName, setCharacterName] = useState<string>(
     blockParams?.characterName || ""
   );
-  const [characterText, setCharacterText] = useState<string>(blockParams?.text || "");
+  const [characterText, setCharacterText] = useState<string>(
+    blockParams?.text || ""
+  );
 
-  const [currentText, setCurrentText] = useState<string>("text");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,11 +64,6 @@ const DialogueBlock: React.FC<DialogueBlockProps> = ({
   };
 
 
-  // Handler for when editing is complete (blur event)
-  const handleBlur = () => {
-    onEditText(id, currentText);
-    setIsEditing(false);
-  };
 
   // Handler for delete button
   const handleDelete = (e: React.MouseEvent) => {
@@ -112,7 +113,6 @@ const DialogueBlock: React.FC<DialogueBlockProps> = ({
               label="角色"
               value={characterName}
               onChange={(e) => setCharacterName(e.target.value)}
-              onBlur={handleBlur}
               margin="dense"
               InputProps={{
                 style: {
@@ -129,7 +129,6 @@ const DialogueBlock: React.FC<DialogueBlockProps> = ({
               ref={textareaRef}
               value={characterText}
               onChange={(e) => setCharacterText(e.target.value)}
-              onBlur={handleBlur}
               minRows={2}
               style={{
                 width: "100%",

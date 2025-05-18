@@ -111,7 +111,6 @@ const ScriptEditorScreen = ({
     const newBlock: ScriptBlock = {
       id: `block-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       type,
-      text: `New ${type}...`, // Default text
     };
 
     // Insert the new block after the active block or at the end

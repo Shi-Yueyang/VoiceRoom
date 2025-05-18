@@ -28,9 +28,8 @@ export interface ScriptBlock {
     | "character"
     | "dialogue"
     | "parenthetical"
-    | "transition"; // Add all your block types
-  text: string;
-  blockParams?: HeadingBlockParam | DescriptionBlockParam | DialogueBlockParam; 
+    | "transition"; 
+  blockParams: HeadingBlockParam | DescriptionBlockParam | DialogueBlockParam; 
 }
 
 interface ScriptContainerProps {

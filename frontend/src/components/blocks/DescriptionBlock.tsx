@@ -20,7 +20,6 @@ const DescriptionBlock = ({
   blockParams: descriptionBlockParam,
   isActive,
   onSelect,
-  onEditText,
   onDelete,
 }: DescriptionBlockProps) => {
   // State for editing mode and text content
@@ -61,10 +60,6 @@ const DescriptionBlock = ({
   };
 
   // Handle finish editing
-  const handleBlur = () => {
-    onEditText(id, currentText);
-    setIsEditing(false);
-  };
 
   // Handle delete with propagation stopped
   const handleDelete = (e: React.MouseEvent) => {
@@ -102,19 +97,17 @@ const DescriptionBlock = ({
           ref={textareaRef}
           value={currentText}
           onChange={handleTextChange}
-          onBlur={handleBlur}
           autoFocus
           minRows={1}
           style={{
             width: "100%",
-            padding: "0",
-            paddingRight: "15px", 
             fontFamily: "Courier New, monospace",
             fontSize: "16px",
             backgroundColor: "transparent",
-            border: "none",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
             outline: "none",
-            resize: "none",
+            resize: "vertical",
             lineHeight: "1.5",
           }}
         />
@@ -125,7 +118,7 @@ const DescriptionBlock = ({
             fontFamily: "Courier New, monospace",
             fontSize: "16px",
             lineHeight: "1.5",
-            paddingRight: "15px", 
+            paddingRight: "15px",
 
             // For mobile readability
             "@media (max-width: 600px)": {

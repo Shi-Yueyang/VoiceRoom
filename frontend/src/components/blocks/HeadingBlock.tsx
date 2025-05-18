@@ -33,7 +33,7 @@ const SceneHeadingBlock = ({
   onDelete,
 }: HeadingBlockProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(isActive);
-  const [intExt, setIntExt] = useState<string>(headingBlockParams?.intExt || "INT.");
+  const [intExt, setIntExt] = useState<string>(headingBlockParams?.intExt || "内景");
   const [location, setLocation] = useState<string>(headingBlockParams?.location || "");
   const [time, setTime] = useState<string>(headingBlockParams?.time || "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -111,14 +111,14 @@ const SceneHeadingBlock = ({
               },
             }}
           >
-            <ToggleButton value="INT." aria-label="interior">
-              INT.
+            <ToggleButton value="内景" aria-label="interior">
+              内景
             </ToggleButton>
-            <ToggleButton value="EXT." aria-label="exterior">
-              EXT.
+            <ToggleButton value="外景" aria-label="exterior">
+              外景
             </ToggleButton>
-            <ToggleButton value="INT./EXT." aria-label="interior/exterior">
-              INT./EXT.
+            <ToggleButton value="内景/外景" aria-label="interior/exterior">
+              内景/外景
             </ToggleButton>
           </ToggleButtonGroup>
 

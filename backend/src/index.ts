@@ -2,9 +2,11 @@ import express, { Request, Response } from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
-import { initializeEditingHandler } from './editingNamespace'; // Editing logic
-import { initializeChatHandler } from './chatHandler';         // Chat logic
-import { initializeWebRTCHandler } from './webrtcHandler';       // WebRTC logic
+import { initializeEditingHandler } from './demos/editingNamespace'; // Editing logic
+import { initializeChatHandler } from './demos/chatHandler';         // Chat logic
+import { initializeWebRTCHandler } from './demos/webrtcHandler';       // WebRTC logic
+import { initializeMongoDBHandler } from './demos/mongodbHandler';     // MongoDB logic
+import { initializeSocketMongo } from './demos/socketMongoHandler';    // MongoDB + Socket.IO integration
 
 const app = express();
 const server = http.createServer(app);
@@ -29,10 +31,17 @@ app.get('/', (req: Request, res: Response) => {
 
 initializeChatHandler(io); 
 initializeWebRTCHandler(io);  
-initializeEditingHandler(io); 
+initializeEditingHandler(io);
+
+// Initialize MongoDB handler (This will setup the MongoDB routes)
+initializeMongoDBHandler(app);
+
+// Start the Socket.IO + MongoDB integration
+// Comment the server.listen() call below when using this
+// as socketMongoHandler creates its own server
+// initializeSocketMongo(app);
 
 // Start the server 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Socket.IO demo available at http://localhost:${PORT}/demo`);
 });
