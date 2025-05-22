@@ -21,7 +21,7 @@ import { DescriptionBlockParam } from "./blocks/DescriptionBlock";
 import { DialogueBlockParam } from "./blocks/DialogueBlock";
 
 export interface ScriptBlock {
-  id: string;
+  _id: string;
   type:
     | "sceneHeading"
     | "description"
@@ -29,7 +29,7 @@ export interface ScriptBlock {
     | "dialogue"
     | "parenthetical"
     | "transition"; 
-  blockParams: HeadingBlockParam | DescriptionBlockParam | DialogueBlockParam; 
+  blockParams?: HeadingBlockParam | DescriptionBlockParam | DialogueBlockParam; 
 }
 
 interface ScriptContainerProps {
@@ -69,8 +69,8 @@ const ScriptContainer = ({
     // If we have valid over and the items are different
     if (over && active.id !== over.id) {
       // Find the indexes for the items
-      const oldIndex = scriptBlocks.findIndex((item) => item.id === active.id);
-      const newIndex = scriptBlocks.findIndex((item) => item.id === over.id);
+      const oldIndex = scriptBlocks.findIndex((item) => item._id === active.id);
+      const newIndex = scriptBlocks.findIndex((item) => item._id === over.id);
 
       // Call the prop function to handle the reordering
       onRearrangeBlocks(oldIndex, newIndex);
@@ -85,13 +85,13 @@ const ScriptContainer = ({
     >
       <Box sx={{ padding: 2 }}>
         <SortableContext
-          items={scriptBlocks.map((block) => block.id)}
+          items={scriptBlocks.map((block) => block._id)}
           strategy={verticalListSortingStrategy}
         >
           {scriptBlocks.map((block) => {
-            const isActive = activeBlockId === block.id;
+            const isActive = activeBlockId === block._id;
             const commonProps = {
-              id: block.id,
+              id: block._id,
               blockParams: block.blockParams,
               isActive: isActive,
               onSelect: onSelectBlock,
@@ -101,8 +101,8 @@ const ScriptContainer = ({
 
             return (
               <BlockItem
-                key={block.id}
-                id={block.id}
+                key={block._id}
+                id={block._id}
                 type={block.type}
                 commonProps={commonProps}
               />

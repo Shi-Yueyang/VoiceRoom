@@ -9,7 +9,7 @@ import SocketMongoChat from './components/demos/SocketMongoChat';
 // Define mock initial script data
 const mockScriptData: ScriptBlock[] = [
   {
-    id: 'block-1',
+    _id: 'block-1',
     type: 'sceneHeading',
     blockParams: {
       intExt: '外景',
@@ -18,14 +18,14 @@ const mockScriptData: ScriptBlock[] = [
     }
   },
   {
-    id: 'block-2',
+    _id: 'block-2',
     type: 'description',
     blockParams: {
       text: 'John enters the coffee shop, looking around nervously.'
     }
   },
   {
-    id: 'block-4',
+    _id: 'block-4',
     type: 'dialogue',
     blockParams: {
       characterName: 'John',

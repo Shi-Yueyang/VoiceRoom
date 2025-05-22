@@ -87,14 +87,14 @@ const ScriptEditorScreen = ({
   const handleEditText = (id: string, newText: string) => {
     setScriptBlocks((prevBlocks) =>
       prevBlocks.map((block) =>
-        block.id === id ? { ...block, text: newText } : block
+        block._id === id ? { ...block, text: newText } : block
       )
     );
   };
 
   const handleDeleteBlock = (id: string) => {
     setScriptBlocks((prevBlocks) =>
-      prevBlocks.filter((block) => block.id !== id)
+      prevBlocks.filter((block) => block._id !== id)
     );
 
     // If the deleted block was active, deactivate
@@ -109,14 +109,14 @@ const ScriptEditorScreen = ({
 
   const handleAddBlock = (type: ScriptBlock["type"]) => {
     const newBlock: ScriptBlock = {
-      id: `block-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      _id: `block-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       type,
     };
 
     // Insert the new block after the active block or at the end
     setScriptBlocks((prevBlocks) => {
       const activeIndex = prevBlocks.findIndex(
-        (block) => block.id === activeBlockId
+        (block) => block._id === activeBlockId
       );
       const insertIndex =
         activeIndex === -1 ? prevBlocks.length : activeIndex + 1;
@@ -127,7 +127,7 @@ const ScriptEditorScreen = ({
     });
 
     // Set the new block as active and close modal
-    setActiveBlockId(newBlock.id);
+    setActiveBlockId(newBlock._id);
     setIsAddElementModalOpen(false);
   };
 
