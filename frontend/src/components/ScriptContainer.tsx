@@ -68,11 +68,9 @@ const ScriptContainer = ({
 
     // If we have valid over and the items are different
     if (over && active.id !== over.id) {
-      // Find the indexes for the items
       const oldIndex = scriptBlocks.findIndex((item) => item._id === active.id);
       const newIndex = scriptBlocks.findIndex((item) => item._id === over.id);
 
-      // Call the prop function to handle the reordering
       onRearrangeBlocks(oldIndex, newIndex);
     }
   };

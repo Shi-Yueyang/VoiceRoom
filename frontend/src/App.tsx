@@ -1,153 +1,90 @@
 import { useState } from 'react';
-import ScriptEditorScreen from './components/ScriptEditorScreen';
-import { ScriptBlock } from './components/ScriptContainer';
-import ChatRoom from './components/demos/ChatRoom';
-import MultiUserEditing from './components/demos/MultiUserEditing';
-import VoiceChat from './components/demos/VoiceChat';
-import SocketMongoChat from './components/demos/SocketMongoChat';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
+import AppRouter from './components/AppRouter';
+import axios from 'axios';
 
-// Define mock initial script data
-const mockScriptData: ScriptBlock[] = [
-  {
-    _id: 'block-1',
-    type: 'sceneHeading',
-    blockParams: {
-      intExt: '外景',
-      location: '咖啡馆',
-      time: '白天'
-    }
+// Configure axios defaults
+axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+
+// Create a custom theme
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2',
+    },
+    secondary: {
+      main: '#dc004e',
+    },
+    background: {
+      default: '#f5f5f5',
+    },
   },
-  {
-    _id: 'block-2',
-    type: 'description',
-    blockParams: {
-      text: 'John enters the coffee shop, looking around nervously.'
-    }
+  typography: {
+    fontFamily: [
+      'Inter',
+      '-apple-system',
+      'BlinkMacSystemFont',
+      '"Segoe UI"',
+      'Roboto',
+      'Oxygen',
+      'Ubuntu',
+      'Cantarell',
+      '"Helvetica Neue"',
+      'sans-serif',
+    ].join(','),
   },
-  {
-    _id: 'block-4',
-    type: 'dialogue',
-    blockParams: {
-      characterName: 'John',
-      text: 'Is this seat taken? lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    }
-  }
-];
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+        },
+      },
+    },
+  },
+});
 
-type DemoType = 'script' | 'chat' | 'editing' | 'voice' | 'socketMongo';
+const App = () => {
+  const [selectedScriptId, setSelectedScriptId] = useState<string | null>(null);
 
-function App() {
-  const [currentDemo, setCurrentDemo] = useState<DemoType>('socketMongo');
-
-  // Handler for saving the script data
-  const handleSaveScript = (scriptId: string, data: any[]) => {
-    console.log(`Saving script ${scriptId}:`, data);
-    // In a real app, you would save this data to local storage or send to a server
+  // Handler for selecting a script from the list
+  const handleSelectScript = (scriptId: string) => {
+    console.log('Selected script ID:', scriptId);
+    setSelectedScriptId(scriptId);
   };
 
-  const renderDemo = () => {
-    switch (currentDemo) {
-      case 'script':
-        return (
-          <ScriptEditorScreen
-            scriptId="my-first-script"
-            initialScriptData={mockScriptData}
-            onSaveScript={handleSaveScript}
-          />
-        );
-      case 'chat':
-        return <ChatRoom />;
-      case 'editing':
-        return <MultiUserEditing />;
-      case 'voice':
-        return <VoiceChat />;
-      case 'socketMongo':
-        return <SocketMongoChat />;
-      default:
-        return <div>Select a demo to get started</div>;
+  // Handler for successfully creating a new script
+  const handleCreateNewScriptSuccess = (newScriptId: string) => {
+    console.log('New script created with ID:', newScriptId);
+    setSelectedScriptId(newScriptId);
+  };
+
+  // Handler for saving script
+  const handleSaveScript = async (scriptId: string, data: any) => {
+    try {
+      await axios.put(`/api/scripts/${scriptId}`, { blocks: data });
+      console.log('Script saved successfully');
+    } catch (error) {
+      console.error('Error saving script:', error);
     }
   };
 
+  console.log('App component rendered with selectedScriptId:', selectedScriptId);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <div style={{ 
-        padding: '10px', 
-        borderBottom: '1px solid #eaeaea', 
-        display: 'flex',
-        gap: '10px',
-        backgroundColor: '#f5f5f5'
-      }}>
-        <button 
-          onClick={() => setCurrentDemo('script')}
-          style={{ 
-            padding: '8px 12px',
-            backgroundColor: currentDemo === 'script' ? '#007bff' : '#e9e9e9',
-            color: currentDemo === 'script' ? 'white' : 'black',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Script Editor
-        </button>
-        <button 
-          onClick={() => setCurrentDemo('chat')}
-          style={{ 
-            padding: '8px 12px',
-            backgroundColor: currentDemo === 'chat' ? '#007bff' : '#e9e9e9',
-            color: currentDemo === 'chat' ? 'white' : 'black',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Chat Room
-        </button>
-        <button 
-          onClick={() => setCurrentDemo('editing')}
-          style={{ 
-            padding: '8px 12px',
-            backgroundColor: currentDemo === 'editing' ? '#007bff' : '#e9e9e9',
-            color: currentDemo === 'editing' ? 'white' : 'black',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Multi-User Editing
-        </button>
-        <button 
-          onClick={() => setCurrentDemo('voice')}
-          style={{ 
-            padding: '8px 12px',
-            backgroundColor: currentDemo === 'voice' ? '#007bff' : '#e9e9e9',
-            color: currentDemo === 'voice' ? 'white' : 'black',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Voice Chat
-        </button>
-        <button 
-          onClick={() => setCurrentDemo('socketMongo')}
-          style={{ 
-            padding: '8px 12px',
-            backgroundColor: currentDemo === 'socketMongo' ? '#007bff' : '#e9e9e9',
-            color: currentDemo === 'socketMongo' ? 'white' : 'black',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Socket.IO + MongoDB
-        </button>
-      </div>
-      <div style={{ flex: 1, overflow: 'auto' }}>
-        {renderDemo()}
-      </div>
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <AppRouter
+          selectedScriptId={selectedScriptId}
+          setSelectedScriptId={setSelectedScriptId}
+          onSelectScript={handleSelectScript}
+          onCreateNewScriptSuccess={handleCreateNewScriptSuccess}
+          onSaveScript={handleSaveScript}
+        />
+      </Router>
+    </ThemeProvider>
   );
-}
+};
 
 export default App;

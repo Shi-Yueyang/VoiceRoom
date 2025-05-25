@@ -1,3 +1,4 @@
+## ScriptEditorScreen
 Create a React functional component using TypeScript and MUI named `ScriptEditorScreen`.
 
 **Role**
@@ -40,3 +41,25 @@ Render the ScriptContainer component inside this area.
 - Handle Add New Block
 - Toggle Character Panel: should be triggered by the "Characters" button in the Header and the close button in the Character Panel component.
 - Handle Save
+
+## ScriptListScreen
+Create a React functional component using TypeScript and MUI named `ScriptListScreen`.
+
+**Role:**
+This component is responsible for:
+1.  Fetching and displaying a list of all existing scripts from a backend REST API.(use axios)
+2.  Allowing the user to select an existing script to navigate to its editor. (navigate to ScriptEditorScreen)
+3.  Providing functionality to create a new script.(sync to backend with axios)
+
+**Constraints & Context:**
+* **Mobile-First:** Design and styling should be optimized for mobile screens.
+* **TypeScript:** Use TypeScript for props, state types, and function signatures.
+* **MUI (Material UI):** Use MUI components for UI elements and layout 
+* **Backend API:** Assume the following REST API endpoints:
+    * `GET /scripts`: To fetch all scripts. Expected response: `ScriptSummary[]`.
+    * `POST /scripts`: To create a new script. Expected request body: `{ title: string }`. Expected response: `ScriptSummary` (or the full new script object, but `ScriptSummary` is sufficient for this component).
+* **No Direct Navigation:** This component should *not* use React Router or similar. Instead, it should use callbacks provided via props for navigation and creation.
+
+**Props:**
+* `onSelectScript`: `(scriptId: string) => void` - Callback function to be called when a user clicks on a script in the list. This should trigger navigation to the `ScriptEditorScreen`.
+* `onCreateNewScriptSuccess`: `(newScriptId: string) => void` - Callback function to be called after a new script has been successfully created on the backend. This should also trigger navigation to the new script's editor.
