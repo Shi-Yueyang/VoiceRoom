@@ -48,7 +48,8 @@ const DescriptionBlock = ({
   }, [isActive, descriptionBlockParam]);
 
   // Handle click on the block
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    e.stopPropagation(); 
     if (!isEditing) {
       onSelect(id);
     }
@@ -126,7 +127,7 @@ const DescriptionBlock = ({
             },
           }}
         >
-          {descriptionBlockParam?.text}
+          {currentText}
         </Typography>
       )}
 

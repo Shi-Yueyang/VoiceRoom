@@ -57,7 +57,8 @@ const DialogueBlock = ({
   }, [isActive]);
 
   // Handler for clicking on the block
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    e.stopPropagation(); 
     if (!isEditing) {
       onSelect(id);
     }

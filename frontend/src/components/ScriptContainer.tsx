@@ -25,10 +25,8 @@ export interface ScriptBlock {
   type:
     | "sceneHeading"
     | "description"
-    | "character"
     | "dialogue"
-    | "parenthetical"
-    | "transition"; 
+
   blockParams?: HeadingBlockParam | DescriptionBlockParam | DialogueBlockParam; 
 }
 

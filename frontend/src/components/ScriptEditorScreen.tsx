@@ -8,7 +8,6 @@ import {
   IconButton,
   CircularProgress,
 } from "@mui/material";
-import SaveIcon from "@mui/icons-material/Save";
 import MenuIcon from "@mui/icons-material/Menu";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
@@ -19,14 +18,12 @@ import { arrayMove } from "@dnd-kit/sortable";
 
 interface ScriptEditorScreenProps {
   scriptId: string;
-  onSaveScript: (scriptId: string, data: ScriptBlock[]) => void;
   onOpenSettings?: () => void; // Optional
   onNavigateBack: () => void; // Added for back navigation
 }
 
 const ScriptEditorScreen = ({
   scriptId,
-  onSaveScript,
   onOpenSettings,
   onNavigateBack,
 }: ScriptEditorScreenProps) => {
@@ -63,6 +60,7 @@ const ScriptEditorScreen = ({
 
   // --- Event Handlers ---
   const handleSelectBlock = (id: string) => {
+    
     setActiveBlockId(id);
   };
 
@@ -86,32 +84,23 @@ const ScriptEditorScreen = ({
   };
 
   const handleAddBlock = (type: ScriptBlock["type"]) => {
+    const blockParams =
+      type === "sceneHeading"
+        ? { text: "" }
+        : type === "description"
+        ? { text: "" }
+        : type === "dialogue"
+        ? { character: "", text: "" }
+        : undefined;
     const newBlock: ScriptBlock = {
       _id: `block-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       type,
+      blockParams,
     };
 
     // Insert the new block after the active block or at the end
-    setScriptBlocks((prevBlocks) => {
-      const activeIndex = prevBlocks.findIndex(
-        (block) => block._id === activeBlockId
-      );
-      const insertIndex =
-        activeIndex === -1 ? prevBlocks.length : activeIndex + 1;
-
-      const newBlocks = [...prevBlocks];
-      newBlocks.splice(insertIndex, 0, newBlock);
-      return newBlocks;
-    });
-
-    // Set the new block as active
+    setScriptBlocks([...scriptBlocks, newBlock]);
     setActiveBlockId(newBlock._id);
-  };
-
-  const handleSave = () => {
-    onSaveScript(scriptId, scriptBlocks);
-    // Could add a snackbar/toast notification here
-    console.log("Script saved:", scriptId);
   };
 
   const handleRearrangeBlocks = (oldIndex: number, newIndex: number) => {
@@ -119,7 +108,13 @@ const ScriptEditorScreen = ({
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    <Box
+      sx={{ display: "flex", flexDirection: "column", height: "100vh" }}
+      onClick={() => {
+        console.log("Clicked outside block, deactivating");
+        setActiveBlockId(null);
+      }}
+    >
       {/* Header */}
       <AppBar position="static">
         <Toolbar>
@@ -157,10 +152,6 @@ const ScriptEditorScreen = ({
               scriptTitle || scriptId
             )}
           </Typography>
-
-          <IconButton color="inherit" aria-label="save" onClick={handleSave}>
-            <SaveIcon />
-          </IconButton>
         </Toolbar>
       </AppBar>
 

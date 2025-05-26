@@ -54,12 +54,13 @@ const SceneHeadingBlock = ({
     }
   }, [isActive, headingBlockParams]);
 
-  // Handle click on the box (to select/activate)
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    e.stopPropagation(); 
     if (!isEditing) {
       onSelect(id);
     }
   };
+
 
   // Handle delete button click
   const handleDelete = (e: React.MouseEvent) => {
