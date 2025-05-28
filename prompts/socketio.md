@@ -146,3 +146,37 @@ Implement `socket.on` listeners for the following client-side events. Each handl
 * Function names: `registerScriptHandlers`, `onBlockAdded`, `onBlockUpdated`, etc. (camelCase)
 * Variable names: `scriptId`, `blockToMove`, `newPosition`, etc.
 * Interface names: `ClientBlockAddedEvent`, `ServerBlockUpdatedEvent`, etc. 
+
+
+## SocketServer
+Create a TypeScript file named `SocketServer.ts` in the `src/socket/` directory.
+
+**Purpose:**
+This module is responsible for initializing the Socket.IO server instance and attaching it to the existing HTTP server. It acts as the central hub for all WebSocket connections, handling new connections, disconnections, and routing events to appropriate handlers.
+
+**Dependencies/Imports:**
+* `Server` class from `socket.io`.
+* `HttpServer` type from `http` module.
+* The `ScriptHandlers` module (assume it's located at `../handlers/ScriptHandlers`).
+* The `SocketEventTypes` module (assume it's located at `../../types/SocketEvent`).
+
+**Exports:**
+* A function, `InitializeSocketServer`, that takes an `HttpServer` instance as an argument.
+* The initialized Socket.IO `Server` instance (`io`) should be exported, allowing other parts of the application (like REST controllers or other handlers) to access it for broadcasting.
+
+**Key Functionality and Logic (within `InitializeSocketServer`):**
+
+1.  **Socket.IO Server Initialization:**
+
+2.  **Connection Handling (`connection` event):**
+    * Listen for the `connection` event on the Socket.IO server.
+    * When a new client `socket` connects:
+        * Log a message indicating a new connection
+        * Listen for the `disconnect` event on that specific `socket` and log a disconnection message.
+        * Implement Room Joining
+        * **Attach Event Handlers:** Attach the specific script-related event handlers from `ScriptHandlers` to this `socket` instance. You will need to pass the `io` instance to these handlers so they can broadcast. Use `socket.on()` for each type of `client:` event (e.g., `client:block_updated`, `client:block_added`, etc.).
+
+**Considerations:**
+* Use TypeScript for all variable types, function parameters, and return types, referencing `SocketEventTypes` for event payloads.
+* Ensure proper error handling and logging.
+* Adhere to PascalCase for the `SocketServer` function and file name as requested.
