@@ -9,12 +9,7 @@ import {
   TextField,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-
-export interface HeadingBlockParam {
-  intExt: string;
-  location: string;
-  time: string;
-}
+import { HeadingBlockParam } from "@chatroom/shared";
 
 interface HeadingBlockProps {
   id: string;

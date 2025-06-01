@@ -16,9 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 
 import BlockItem from "./blocks/BlockItem";
-import { HeadingBlockParam } from "./blocks/HeadingBlock";
-import { DescriptionBlockParam } from "./blocks/DescriptionBlock";
-import { DialogueBlockParam } from "./blocks/DialogueBlock";
+import { HeadingBlockParam, DescriptionBlockParam, DialogueBlockParam } from "@chatroom/shared";
 
 export interface ScriptBlock {
   _id: string;

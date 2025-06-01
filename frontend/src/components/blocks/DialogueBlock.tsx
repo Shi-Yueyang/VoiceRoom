@@ -7,11 +7,7 @@ import {
   TextField,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-
-export interface DialogueBlockParam {
-  characterName: string;
-  text: string;
-}
+import { DialogueBlockParam } from "@chatroom/shared";
 
 interface DialogueBlockProps {
   id: string;

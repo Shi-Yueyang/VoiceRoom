@@ -19,7 +19,7 @@ import {
   ServerBlockUpdatedEvent,
   ServerBlockDeletedEvent,
   ServerBlocksReorderedEvent
-} from './SocketEvents';
+} from '@chatroom/shared';
 
 /**
  * Register all script-related socket event handlers

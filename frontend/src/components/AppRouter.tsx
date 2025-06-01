@@ -13,7 +13,6 @@ type AppRouterProps = {
 
 const ScriptEditorWrapper = ({ 
   setSelectedScriptId, 
-  onSaveScript 
 }: { 
   setSelectedScriptId: (id: string | null) => void,
   onSaveScript: (scriptId: string, data: any) => void
@@ -34,7 +33,6 @@ const ScriptEditorWrapper = ({
   return (
     <ScriptEditorScreen
       scriptId={scriptId || ''}
-      onSaveScript={onSaveScript}
       onNavigateBack={handleBack}
     />
   );

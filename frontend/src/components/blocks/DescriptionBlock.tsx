@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Box, Typography, IconButton, TextareaAutosize } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-
-export interface DescriptionBlockParam {
-  text: string;
-}
+import { DescriptionBlockParam } from "@chatroom/shared";
 
 interface DescriptionBlockProps {
   id: string;
