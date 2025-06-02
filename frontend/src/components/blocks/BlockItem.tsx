@@ -6,11 +6,21 @@ import DescriptionBlock from "./DescriptionBlock";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import { BlockParamTypes, BlockParamUpdates, DescriptionBlockParam, DialogueBlockParam, HeadingBlockParam } from "@chatroom/shared";
+
+interface CommonBlockProps {
+  id: string;
+  blockParams: BlockParamTypes;
+  isActive: boolean;
+  onSelect: (id: string) => void;
+  onDelete: (id: string) => void;
+  onUpdate: (blockId: string, updates: BlockParamUpdates) => void;
+}
 
 interface BlockItemProps {
   type: string;
   id: string;
-  commonProps: any;
+  commonProps: CommonBlockProps;
 }
 // Define the BlockItem component
 
@@ -28,13 +38,13 @@ const BlockItem = ({ id, type, commonProps }: BlockItemProps) => {
   let blockElement;
   switch (type) {
     case "sceneHeading":
-      blockElement = <SceneHeadingBlock {...commonProps} />;
+      blockElement = <SceneHeadingBlock {...commonProps} blockParams={commonProps.blockParams as HeadingBlockParam} />;
       break;
     case "description":
-      blockElement = <DescriptionBlock {...commonProps} />;
+      blockElement = <DescriptionBlock {...commonProps} blockParams={commonProps.blockParams as DescriptionBlockParam} />;
       break;
     case "dialogue":
-      blockElement = <DialogueBlock {...commonProps} characterId="diag-1" />;
+      blockElement = <DialogueBlock {...commonProps} blockParams={commonProps.blockParams as DialogueBlockParam} />;
       break;
     default:
       blockElement = (

@@ -34,12 +34,14 @@ export const useScriptSocket = ({
 }: UseScriptSocketProps) => {
   console.log("useScriptSocket called with scriptId:", scriptId);
   const socketRef = useRef<Socket | null>(null);
+
   useEffect(() => {
     socketRef.current = io(import.meta.env.VITE_BACKEND_URL || "");
     const socket = socketRef.current;
-    socket.emit("join-script", scriptId);
+    socket.emit("join_room", scriptId);
+
     if (onBlockAdded) {
-      socket.on("block-added", onBlockAdded);
+      socket.on("server:blockAdded", onBlockAdded);
     }
     if (onBlockUpdated) {
       socket.on("server:blockUpdated", onBlockUpdated);
@@ -58,7 +60,7 @@ export const useScriptSocket = ({
     }
     return () => {
       console.log("Cleaning up socket connection for scriptId:", scriptId);
-      socket.off("block-added", onBlockAdded);
+      socket.off("server:blockAdded", onBlockAdded);
       socket.off("server:blockUpdated", onBlockUpdated);
       socket.off("server:blockDeleted", onBlockDeleted);
       socket.off("server:blocksReordered", onBlocksReordered);
@@ -105,6 +107,7 @@ export const useScriptSocket = ({
     },
     [scriptId]
   );
+
   const deleteBlock = useCallback(
     (blockId: string) => {
       if (!socketRef.current) return;

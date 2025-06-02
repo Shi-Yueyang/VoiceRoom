@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -9,15 +9,16 @@ import {
   TextField,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { HeadingBlockParam } from "@chatroom/shared";
+import { BlockParamUpdates, HeadingBlockParam } from "@chatroom/shared";
 
 interface HeadingBlockProps {
   id: string;
-  blockParams?: HeadingBlockParam;
+  blockParams: HeadingBlockParam;
+
   isActive: boolean;
   onSelect: (id: string) => void;
-  onEditText: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
+  onUpdate: (blockId: string, updates: BlockParamUpdates) => void;
 }
 
 const SceneHeadingBlock = ({
@@ -26,36 +27,27 @@ const SceneHeadingBlock = ({
   isActive,
   onSelect,
   onDelete,
+  onUpdate,
 }: HeadingBlockProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(isActive);
-  const [intExt, setIntExt] = useState<string>(headingBlockParams?.intExt || "内景");
-  const [location, setLocation] = useState<string>(headingBlockParams?.location || "");
-  const [time, setTime] = useState<string>(headingBlockParams?.time || "");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const timeInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isActive) {
       setIsEditing(true);
 
-      setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-        }
-      }, 0);
+
     } else {
       setIsEditing(false);
     }
   }, [isActive, headingBlockParams]);
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    e.stopPropagation(); 
+    e.stopPropagation();
     if (!isEditing) {
       onSelect(id);
     }
   };
-
 
   // Handle delete button click
   const handleDelete = (e: React.MouseEvent) => {
@@ -87,14 +79,13 @@ const SceneHeadingBlock = ({
           minHeight: "56px",
         },
       }}
-      
     >
       {isEditing ? (
-        <Stack spacing={2} sx={{ width: "100%" }} >
+        <Stack spacing={2} sx={{ width: "100%" }}>
           <ToggleButtonGroup
-            value={intExt}
-            onChange={(_e, newType) => {
-              setIntExt(newType);
+            value={headingBlockParams.intExt}
+            onChange={(_e, newIntExt) => {
+              onUpdate(id, { ...headingBlockParams, intExt: newIntExt });
             }}
             exclusive
             aria-label="scene location type"
@@ -121,9 +112,12 @@ const SceneHeadingBlock = ({
           <Box sx={{ position: "relative" }}>
             <TextField
               label="地点"
-              value={location}
+              value={headingBlockParams.location}
               onChange={(e) => {
-                setLocation(e.target.value);
+                onUpdate(id, {
+                  ...headingBlockParams,
+                  location: e.target.value,
+                });
               }}
               fullWidth
               size="small"
@@ -140,11 +134,10 @@ const SceneHeadingBlock = ({
 
           <Box sx={{ position: "relative" }}>
             <TextField
-              inputRef={timeInputRef}
               label="时间"
-              value={time}
+              value={headingBlockParams.time}
               onChange={(e) => {
-                setTime(e.target.value);
+                onUpdate(id, { ...headingBlockParams, time: e.target.value });
               }}
               fullWidth
               size="small"
@@ -173,7 +166,7 @@ const SceneHeadingBlock = ({
             },
           }}
         >
-          {intExt} - {location} - {time}
+          {headingBlockParams.intExt} - {headingBlockParams.location} - {headingBlockParams.time}
         </Typography>
       )}
 

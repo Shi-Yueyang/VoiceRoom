@@ -27,16 +27,15 @@ import {
  * @param io The global Socket.IO server instance
  */
 export const registerScriptHandlers = (socket: Socket, io: Server): void => {
-  /**
-   * Handle the 'client:blockAdded' event - when a client adds a new block
-   */
+
   socket.on('client:blockAdded', async (payload: ClientBlockAddedEvent) => {
+    console.log('client:blockAdded event received:', payload);
     try {
       const { scriptId, block, precedingBlockId } = payload;
       
       // Generate a new ObjectId for the block if not provided
-      if (!block.id) {
-        block.id = new ObjectId().toString();
+      if (!block._id) {
+        block._id = new ObjectId().toString();
       }
       
       // Fetch the script document
@@ -60,7 +59,7 @@ export const registerScriptHandlers = (socket: Socket, io: Server): void => {
         }
       } else {
         // Find the preceding block
-        const precedingBlockIndex = blocks.findIndex(b => b.id === precedingBlockId);
+        const precedingBlockIndex = blocks.findIndex(b => b._id === precedingBlockId);
         if (precedingBlockIndex === -1) {
           throw new Error(`Preceding block with ID ${precedingBlockId} not found`);
         }
@@ -193,7 +192,7 @@ export const registerScriptHandlers = (socket: Socket, io: Server): void => {
       const blocks = [...script.blocks].sort((a, b) => a.position - b.position);
       
       // Find the block to move
-      const blockToMoveIndex = blocks.findIndex(b => b.id === blockId);
+      const blockToMoveIndex = blocks.findIndex(b => b._id === blockId);
       if (blockToMoveIndex === -1) {
         throw new Error(`Block with ID ${blockId} not found`);
       }
@@ -212,7 +211,7 @@ export const registerScriptHandlers = (socket: Socket, io: Server): void => {
         }
       } else {
         // Find the preceding block
-        const precedingBlockIndex = blocks.findIndex(b => b.id === precedingBlockId);
+        const precedingBlockIndex = blocks.findIndex(b => b._id === precedingBlockId);
         if (precedingBlockIndex === -1) {
           throw new Error(`Preceding block with ID ${precedingBlockId} not found`);
         }
@@ -246,7 +245,7 @@ export const registerScriptHandlers = (socket: Socket, io: Server): void => {
         // Get blocks sorted by position for the block order
         const sortedBlockIds = updatedScript.blocks
           .sort((a, b) => a.position - b.position)
-          .map(block => block.id);
+          .map(block => block._id);
           
         socket.broadcast.to(scriptId).emit('server:blocksReordered', {
           scriptId,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -7,60 +7,41 @@ import {
   TextField,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { DialogueBlockParam } from "@chatroom/shared";
+import { BlockParamUpdates, DialogueBlockParam } from "@chatroom/shared";
 
 interface DialogueBlockProps {
   id: string;
-  blockParams?: DialogueBlockParam;
+  blockParams: DialogueBlockParam;
   isActive: boolean;
   onSelect: (id: string) => void;
-  onEditText: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
+  onUpdate: (blockId: string, updates: BlockParamUpdates) => void;
 }
 
 const DialogueBlock = ({
   id,
-  blockParams,
+  blockParams: dialogueBlockParams,
   isActive,
   onSelect,
   onDelete,
+  onUpdate,
 }: DialogueBlockProps) => {
   // Component state
   const [isEditing, setIsEditing] = useState<boolean>(isActive);
-  const [characterName, setCharacterName] = useState<string>(
-    blockParams?.characterName || ""
-  );
-  const [characterText, setCharacterText] = useState<string>(
-    blockParams?.text || ""
-  );
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isActive) {
       setIsEditing(true);
-
-      // Focus the textarea after a brief delay to ensure it's rendered
-      setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-        }
-      }, 0);
-    } else {
-      setIsEditing(false);
     }
   }, [isActive]);
 
   // Handler for clicking on the block
   const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    e.stopPropagation(); 
+    e.stopPropagation();
     if (!isEditing) {
       onSelect(id);
     }
   };
-
-
 
   // Handler for delete button
   const handleDelete = (e: React.MouseEvent) => {
@@ -103,13 +84,12 @@ const DialogueBlock = ({
         {isEditing ? (
           <Box sx={{ width: "90%", margin: "0 auto", textAlign: "center" }}>
             <TextField
-              inputRef={nameInputRef}
               fullWidth
               variant="outlined"
               size="small"
               label="角色"
-              value={characterName}
-              onChange={(e) => setCharacterName(e.target.value)}
+              value={dialogueBlockParams.characterName}
+              onChange={(e) => onUpdate(id, { characterName: e.target.value })}
               margin="dense"
               InputProps={{
                 style: {
@@ -123,9 +103,8 @@ const DialogueBlock = ({
               sx={{ mb: 1 }}
             />
             <TextareaAutosize
-              ref={textareaRef}
-              value={characterText}
-              onChange={(e) => setCharacterText(e.target.value)}
+              value={dialogueBlockParams.text}
+              onChange={(e) => onUpdate(id, { text: e.target.value })}
               minRows={2}
               style={{
                 width: "100%",
@@ -156,7 +135,7 @@ const DialogueBlock = ({
                 marginBottom: "4px",
               }}
             >
-              {characterName}
+              {dialogueBlockParams.characterName || "请设置对话"}
             </Typography>
             <Typography
               sx={{
@@ -174,7 +153,7 @@ const DialogueBlock = ({
                 },
               }}
             >
-              {characterText}
+              {dialogueBlockParams.text}
             </Typography>
           </>
         )}

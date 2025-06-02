@@ -16,7 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 
 import BlockItem from "./blocks/BlockItem";
-import { HeadingBlockParam, DescriptionBlockParam, DialogueBlockParam } from "@chatroom/shared";
+import { HeadingBlockParam, DescriptionBlockParam, DialogueBlockParam, BlockParamUpdates } from "@chatroom/shared";
 
 export interface ScriptBlock {
   _id: string;
@@ -25,25 +25,25 @@ export interface ScriptBlock {
     | "description"
     | "dialogue"
 
-  blockParams?: HeadingBlockParam | DescriptionBlockParam | DialogueBlockParam; 
+  blockParams: HeadingBlockParam | DescriptionBlockParam | DialogueBlockParam; 
 }
 
 interface ScriptContainerProps {
   scriptBlocks: ScriptBlock[];
   activeBlockId: string | null;
   onSelectBlock: (id: string) => void;
-  onEditBlockText: (id: string, newText: string) => void;
   onDeleteBlock: (id: string) => void;
+  onUpdateBlock: (blockId:string, updates:BlockParamUpdates) => void; 
   onAddBlock: (type: ScriptBlock["type"], afterId: string | null) => void;
-  onRearrangeBlocks: (oldIndex: number, newIndex: number) => void; // Uncommented for drag-and-drop
+  onRearrangeBlocks: (oldIndex: number, newIndex: number) => void; 
 }
 
 const ScriptContainer = ({
   scriptBlocks,
   activeBlockId,
   onSelectBlock,
-  onEditBlockText,
   onDeleteBlock,
+  onUpdateBlock, 
   onRearrangeBlocks,
 }: ScriptContainerProps) => {
   // Set up drag sensors for mouse, touch, and keyboard
@@ -89,8 +89,8 @@ const ScriptContainer = ({
               blockParams: block.blockParams,
               isActive: isActive,
               onSelect: onSelectBlock,
-              onEditText: onEditBlockText,
               onDelete: onDeleteBlock,
+              onUpdate:onUpdateBlock
             };
 
             return (

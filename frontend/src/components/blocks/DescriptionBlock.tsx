@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Typography, IconButton, TextareaAutosize } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { DescriptionBlockParam } from "@chatroom/shared";
+import { BlockParamUpdates, DescriptionBlockParam } from "@chatroom/shared";
 
 interface DescriptionBlockProps {
   id: string;
   blockParams: DescriptionBlockParam;
   isActive: boolean;
   onSelect: (id: string) => void;
-  onEditText: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
+  onUpdate: (blockId: string, updates: BlockParamUpdates) => void;
+  
 }
 
 const DescriptionBlock = ({
@@ -18,27 +19,18 @@ const DescriptionBlock = ({
   isActive,
   onSelect,
   onDelete,
+  onUpdate
 }: DescriptionBlockProps) => {
   // State for editing mode and text content
   const [isEditing, setIsEditing] = useState<boolean>(isActive);
-  const [currentText, setCurrentText] = useState<string>(
-    descriptionBlockParam?.text
-  );
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
 
   // Update editing state when isActive prop changes
   useEffect(() => {
     if (isActive) {
       setIsEditing(true);
 
-      // Focus the textarea with a slight delay to ensure it's rendered
-      setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-          const length = textareaRef.current.value.length;
-          textareaRef.current.setSelectionRange(length, length);
-        }
-      }, 0);
+
     } else {
       setIsEditing(false);
     }
@@ -52,12 +44,6 @@ const DescriptionBlock = ({
     }
   };
 
-  // Handle text changes
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setCurrentText(e.target.value);
-  };
-
-  // Handle finish editing
 
   // Handle delete with propagation stopped
   const handleDelete = (e: React.MouseEvent) => {
@@ -92,9 +78,10 @@ const DescriptionBlock = ({
     >
       {isEditing ? (
         <TextareaAutosize
-          ref={textareaRef}
-          value={currentText}
-          onChange={handleTextChange}
+          value={descriptionBlockParam.text}
+          onChange={(e)=>{
+            onUpdate(id, { text: e.target.value });
+          }}
           autoFocus
           minRows={1}
           style={{
@@ -124,7 +111,7 @@ const DescriptionBlock = ({
             },
           }}
         >
-          {currentText}
+          {descriptionBlockParam.text || "点击编辑描述..."}
         </Typography>
       )}
 

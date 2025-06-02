@@ -32,12 +32,22 @@ export interface DialogueBlockParam {
 }
 
 /**
+ * Union type for all possible block parameters
+ */
+export type BlockParamTypes = HeadingBlockParam | DescriptionBlockParam | DialogueBlockParam;
+
+/**
+ * Partial update type for block parameters
+ */
+export type BlockParamUpdates = Partial<BlockParamTypes>;
+
+/**
  * Main interface for a single script block
  */
 export interface ScriptBlock {
-  id: string;  // unique identifier for the block
+  _id: string;  // unique identifier for the block
   type: 'sceneHeading' | 'description' | 'dialogue';
-  blockParams: HeadingBlockParam | DescriptionBlockParam | DialogueBlockParam;
+  blockParams: BlockParamTypes;
 }
 
 // Client-to-Server Event Interfaces
@@ -48,7 +58,7 @@ export interface ScriptBlock {
 export interface ClientBlockUpdateEvent {
   scriptId: string;  // ID of the script being edited
   blockId: string;   // ID of the block being updated
-  updates: Partial<HeadingBlockParam | DescriptionBlockParam | DialogueBlockParam>;  // partial object containing only the changed parameters
+  updates: BlockParamUpdates;  // partial object containing only the changed parameters
 }
 
 /**
@@ -85,7 +95,7 @@ export interface ClientBlockMovedEvent {
 export interface ServerBlockUpdatedEvent {
   scriptId: string;
   blockId: string;
-  updates: Partial<HeadingBlockParam | DescriptionBlockParam | DialogueBlockParam>;  // partial object with updated parameters
+  updates: BlockParamUpdates;  // partial object with updated parameters
   timestamp: number;  // Unix timestamp of the update on the server
 }
 

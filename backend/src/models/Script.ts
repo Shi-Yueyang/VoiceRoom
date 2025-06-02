@@ -21,7 +21,7 @@ export type IScriptBlockParams = IHeadingBlockParam | IDescriptionBlockParam | I
 
 // Script block interface
 export interface IScriptBlock {
-  id: string;
+  _id: string;
   type: 'sceneHeading' | 'description' | 'dialogue';
   position: number;
   blockParams: IScriptBlockParams;
@@ -39,7 +39,7 @@ export interface ScriptDocument extends IScript, Document {}
 
 // Schema for embedded script blocks
 const scriptBlockSchema = new Schema<IScriptBlock>({
-  id: { type: String, required: true },
+  _id: { type: String, required: true },
   type: { 
     type: String, 
     required: true,
