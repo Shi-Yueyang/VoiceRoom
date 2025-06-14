@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
   Box,
@@ -15,7 +15,13 @@ import ScriptContainer from "../components/ScriptContainer";
 import AddBlockButton from "../components/AddBlockButton";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useScriptSocket } from "../hooks/useSocketIo";
-import { ScriptBlock } from "@chatroom/shared";
+import {
+  ScriptBlock,
+  ServerBlockAddedEvent,
+  ServerBlockUpdatedEvent,
+  ServerBlockDeletedEvent,
+  ServerBlocksMovedEvent,
+} from "@chatroom/shared";
 import { BlockParamUpdates } from "@chatroom/shared/dist/SocketEvents";
 
 interface ScriptEditorScreenProps {
@@ -28,62 +34,68 @@ const ScriptEditorScreen = ({
   onNavigateBack,
 }: ScriptEditorScreenProps) => {
   const [scriptBlocks, setScriptBlocks] = useState<ScriptBlock[]>([]);
-  const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
-  const [scriptTitle, setScriptTitle] = useState<string>("");
+  const [activeBlockId, setActiveBlockId] = useState<string | null>(null);  const [scriptTitle, setScriptTitle] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const { addBlockInSocket, updateBlockInSocket, deleteBlockInSocket, moveBlockInSocket } = useScriptSocket({scriptId ,
-    onServerBlockAdded: (event) => {
-      console.log("Block added via socket:", event);
-      setScriptBlocks((prevBlocks) => [...prevBlocks, event.block]);
-    },
-    
-    onServerBlockUpdated: (event) => {
-      console.log("Block updated via socket:", event);
-      setScriptBlocks((prevBlocks) =>
-        prevBlocks.map((block) =>
-          block._id === event.blockId
-            ? {
-                ...block,
-                blockParams: {
-                  ...block.blockParams,
-                  ...event.blockParamUpdates,
-                },
-              }
-            : block
-        )
-      );
-    },
-    
-    onServerBlockDeleted: (event) => {
-      console.log("Block deleted via socket:", event);
-      setScriptBlocks((prevBlocks) =>
-        prevBlocks.filter((block) => block._id !== event.blockId)
-      );
-    },
 
-    onServerBlockMoved: (event) => {
-      console.log("Blocks moved via socket:", event);
-      setScriptBlocks((prevBlocks) => {
-        const updatedBlocks = [...prevBlocks];
-        const movedBlockIndex = updatedBlocks.findIndex(
-          (block) => block._id === event.blockId
-        );
-        
-        if (movedBlockIndex !== -1) {
-          // Adjust the position of the moved block
-          updatedBlocks[movedBlockIndex] = {
-            ...updatedBlocks[movedBlockIndex],
-            position: event.newPosition,
-          };
-          
-          // Sort the blocks by position after moving
-          return updatedBlocks.sort((a, b) => a.position - b.position);
-        }
-        
-        return updatedBlocks;
-      });
-    },
+  // Wrap socket event handlers in useCallback to prevent unnecessary reconnections
+  const onServerBlockAdded = useCallback((event: ServerBlockAddedEvent) => {
+    console.log("Block added via socket:", event);
+    setScriptBlocks((prevBlocks) => [...prevBlocks, event.block]);
+  }, []);
 
+  const onServerBlockUpdated = useCallback((event: ServerBlockUpdatedEvent) => {
+    console.log("Block updated via socket:", event);
+    setScriptBlocks((prevBlocks) =>
+      prevBlocks.map((block) =>
+        block._id === event.blockId
+          ? {
+              ...block,
+              blockParams: {
+                ...block.blockParams,
+                ...event.blockParamUpdates,
+              },
+            }
+          : block
+      )
+    );
+  }, []);
+
+  const onServerBlockDeleted = useCallback((event: ServerBlockDeletedEvent) => {
+    console.log("Block deleted via socket:", event);
+    setScriptBlocks((prevBlocks) =>
+      prevBlocks.filter((block) => block._id !== event.blockId)
+    );
+  }, []);
+
+  const onServerBlockMoved = useCallback((event: ServerBlocksMovedEvent) => {
+    console.log("Blocks moved via socket:", event);
+    setScriptBlocks((prevBlocks) => {
+      const updatedBlocks = [...prevBlocks];
+      const movedBlockIndex = updatedBlocks.findIndex(
+        (block) => block._id === event.blockId
+      );
+      
+      if (movedBlockIndex !== -1) {
+        // Adjust the position of the moved block
+        updatedBlocks[movedBlockIndex] = {
+          ...updatedBlocks[movedBlockIndex],
+          position: event.newPosition,
+        };
+        
+        // Sort the blocks by position after moving
+        return updatedBlocks.sort((a, b) => a.position - b.position);
+      }
+      
+      return updatedBlocks;
+    });
+  }, []);
+
+  const { addBlockInSocket, updateBlockInSocket, deleteBlockInSocket, moveBlockInSocket } = useScriptSocket({
+    scriptId,
+    onServerBlockAdded,
+    onServerBlockUpdated,
+    onServerBlockDeleted,
+    onServerBlockMoved,
   });
 
   // Fetch script data including title and blocks
