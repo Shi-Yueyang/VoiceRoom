@@ -2,7 +2,7 @@ import {
   ServerBlockAddedEvent,
   ServerBlockUpdatedEvent,
   ServerBlockDeletedEvent,
-  ServerBlocksReorderedEvent,
+  ServerBlocksMovedEvent,
   ClientBlockAddedEvent,
   ScriptBlock,
   DescriptionBlockParam,
@@ -17,20 +17,20 @@ import { io, Socket } from "socket.io-client";
 
 interface UseScriptSocketProps {
   scriptId: string;
-  onBlockAdded?: (event: ServerBlockAddedEvent) => void;
-  onBlockUpdated?: (event: ServerBlockUpdatedEvent) => void;
-  onBlockDeleted?: (event: ServerBlockDeletedEvent) => void;
-  onBlocksReordered?: (event: ServerBlocksReorderedEvent) => void;
-  onError?: (error: { message: string; error: string }) => void;
+  onServerBlockAdded?: (event: ServerBlockAddedEvent) => void;
+  onServerBlockUpdated?: (event: ServerBlockUpdatedEvent) => void;
+  onServerBlockDeleted?: (event: ServerBlockDeletedEvent) => void;
+  onServerBlockMoved?: (event: ServerBlocksMovedEvent) => void;
+  onServerError?: (error: { message: string; error: string }) => void;
 }
 
 export const useScriptSocket = ({
   scriptId,
-  onBlockAdded,
-  onBlockUpdated,
-  onBlockDeleted,
-  onBlocksReordered,
-  onError,
+  onServerBlockAdded,
+  onServerBlockUpdated,
+  onServerBlockDeleted,
+  onServerBlockMoved,
+  onServerError: onError,
 }: UseScriptSocketProps) => {
   console.log("useScriptSocket called with scriptId:", scriptId);
   const socketRef = useRef<Socket | null>(null);
@@ -40,19 +40,19 @@ export const useScriptSocket = ({
     const socket = socketRef.current;
     socket.emit("join_room", scriptId);
 
-    if (onBlockAdded) {
-      socket.on("server:blockAdded", onBlockAdded);
+    if (onServerBlockAdded) {
+      socket.on("server:blockAdded", onServerBlockAdded);
     }
-    if (onBlockUpdated) {
-      socket.on("server:blockUpdated", onBlockUpdated);
-    }
-
-    if (onBlockDeleted) {
-      socket.on("server:blockDeleted", onBlockDeleted);
+    if (onServerBlockUpdated) {
+      socket.on("server:blockUpdated", onServerBlockUpdated);
     }
 
-    if (onBlocksReordered) {
-      socket.on("server:blocksReordered", onBlocksReordered);
+    if (onServerBlockDeleted) {
+      socket.on("server:blockDeleted", onServerBlockDeleted);
+    }
+
+    if (onServerBlockMoved) {
+      socket.on("server:blockMoved", onServerBlockMoved);
     }
 
     if (onError) {
@@ -60,55 +60,54 @@ export const useScriptSocket = ({
     }
     return () => {
       console.log("Cleaning up socket connection for scriptId:", scriptId);
-      socket.off("server:blockAdded", onBlockAdded);
-      socket.off("server:blockUpdated", onBlockUpdated);
-      socket.off("server:blockDeleted", onBlockDeleted);
-      socket.off("server:blocksReordered", onBlocksReordered);
+      socket.off("server:blockAdded", onServerBlockAdded);
+      socket.off("server:blockUpdated", onServerBlockUpdated);
+      socket.off("server:blockDeleted", onServerBlockDeleted);
+      socket.off("server:blocksReordered", onServerBlockMoved);
       socket.off("server:error", onError);
       socket.disconnect();
     };
   }, [
     scriptId,
-    onBlockAdded,
-    onBlockUpdated,
-    onBlockDeleted,
-    onBlocksReordered,
+    onServerBlockAdded,
+    onServerBlockUpdated,
+    onServerBlockDeleted,
+    onServerBlockMoved,
     onError,
   ]);
 
-  const addBlock = useCallback(
-    (block: ScriptBlock, precedingBlockId: string | null) => {
+  const addBlockInSocket = useCallback(
+    (block: ScriptBlock) => {
       if (!socketRef.current) return;
 
       const payload: ClientBlockAddedEvent = {
         scriptId,
         block,
-        precedingBlockId,
       };
       socketRef.current.emit("client:blockAdded", payload);
     },
     [scriptId]
   );
 
-  const updateBlock = useCallback(
+  const updateBlockInSocket = useCallback(
     (
-      updates: Partial<
+      blockId: string,
+      blockParamUpdates: Partial<
         HeadingBlockParam | DescriptionBlockParam | DialogueBlockParam
       >,
-      blockId: string
     ) => {
       if (!socketRef.current) return;
       const payload: ClientBlockUpdateEvent = {
         scriptId,
         blockId,
-        updates,
+        blockParamUpdates
       };
       socketRef.current.emit("client:blockUpdated", payload);
     },
     [scriptId]
   );
 
-  const deleteBlock = useCallback(
+  const deleteBlockInSocket = useCallback(
     (blockId: string) => {
       if (!socketRef.current) return;
 
@@ -122,14 +121,14 @@ export const useScriptSocket = ({
     [scriptId]
   );
 
-  const moveBlock = useCallback(
-    (blockId: string, precedingBlockId: string | null) => {
+  const moveBlockInSocket = useCallback(
+    (blockId: string, newPosition:number) => {
       if (!socketRef.current) return;
 
       const payload: ClientBlockMovedEvent = {
         scriptId,
         blockId,
-        precedingBlockId,
+        newPosition
       };
 
       socketRef.current.emit("client:blockMoved", payload);
@@ -138,10 +137,10 @@ export const useScriptSocket = ({
   );
 
   return {
-    addBlock,
-    updateBlock,
-    deleteBlock,
-    moveBlock,
+    addBlockInSocket,
+    updateBlockInSocket,
+    deleteBlockInSocket,
+    moveBlockInSocket,
     socket: socketRef.current,
   };
 };

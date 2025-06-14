@@ -34,7 +34,6 @@ interface ScriptContainerProps {
   onSelectBlock: (id: string) => void;
   onDeleteBlock: (id: string) => void;
   onUpdateBlock: (blockId:string, updates:BlockParamUpdates) => void; 
-  onAddBlock: (type: ScriptBlock["type"], afterId: string | null) => void;
   onRearrangeBlocks: (oldIndex: number, newIndex: number) => void; 
 }
 

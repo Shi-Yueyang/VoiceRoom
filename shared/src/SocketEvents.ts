@@ -47,6 +47,7 @@ export type BlockParamUpdates = Partial<BlockParamTypes>;
 export interface ScriptBlock {
   _id: string;  // unique identifier for the block
   type: 'sceneHeading' | 'description' | 'dialogue';
+  position: number;  // determines the order of blocks (higher numbers appear later)
   blockParams: BlockParamTypes;
 }
 
@@ -58,7 +59,7 @@ export interface ScriptBlock {
 export interface ClientBlockUpdateEvent {
   scriptId: string;  // ID of the script being edited
   blockId: string;   // ID of the block being updated
-  updates: BlockParamUpdates;  // partial object containing only the changed parameters
+  blockParamUpdates: BlockParamUpdates;  // partial object containing only the changed parameters
 }
 
 /**
@@ -67,7 +68,6 @@ export interface ClientBlockUpdateEvent {
 export interface ClientBlockAddedEvent {
   scriptId: string;
   block: ScriptBlock;  // the full new block data, including its id
-  precedingBlockId: string | null;  // the ID of the block it should be inserted after. null if adding at the beginning.
 }
 
 /**
@@ -82,21 +82,27 @@ export interface ClientBlockDeletedEvent {
  * Event for moving a block from client to server
  */
 export interface ClientBlockMovedEvent {
-  scriptId: string;
-  blockId: string;  // the ID of the block that was moved
-  precedingBlockId: string | null;  // the ID of the block it was moved after in the new order. null if moved to the beginning.
+    scriptId: string;
+    blockId: string;
+    newPosition: number;
 }
 
+export interface ServerBlockPositionUpdatedEvent {
+    scriptId: string;
+    blockId: string;
+    newPosition: number;  // the new position of the block after reordering
+    timestamp: number;  // when the update occurred
+}
 // Server-to-Client Event Interfaces
 
 /**
  * Event for notifying clients about a block update
  */
 export interface ServerBlockUpdatedEvent {
-  scriptId: string;
-  blockId: string;
-  updates: BlockParamUpdates;  // partial object with updated parameters
-  timestamp: number;  // Unix timestamp of the update on the server
+    scriptId: string;
+    blockId: string;
+    blockParamUpdates: BlockParamUpdates;
+    timestamp: number;
 }
 
 /**
@@ -121,8 +127,8 @@ export interface ServerBlockDeletedEvent {
 /**
  * Event for notifying clients about reordered blocks
  */
-export interface ServerBlocksReorderedEvent {
-  scriptId: string;
-  blockOrder: string[];  // an array of all block IDs in their new, complete order
-  timestamp: number;
+export interface ServerBlocksMovedEvent {
+    scriptId: string;
+    blockId: string;
+    newPosition: number;
 }
