@@ -102,6 +102,7 @@ export const useScriptSocket = ({
         blockId,
         blockParamUpdates
       };
+      console.log("Emitting client:blockUpdated with payload:", payload);
       socketRef.current.emit("client:blockUpdated", payload);
     },
     [scriptId]

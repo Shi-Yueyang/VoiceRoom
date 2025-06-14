@@ -53,6 +53,7 @@ const ScriptEditorScreen = ({
         )
       );
     },
+    
     onServerBlockDeleted: (event) => {
       console.log("Block deleted via socket:", event);
       setScriptBlocks((prevBlocks) =>
