@@ -15,7 +15,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
-import BlockItem from "./blocks/BlockItem";
+import { BlockItem } from "../editor";
 import { HeadingBlockParam, DescriptionBlockParam, DialogueBlockParam, BlockParamUpdates } from "@chatroom/shared";
 
 export interface ScriptBlock {

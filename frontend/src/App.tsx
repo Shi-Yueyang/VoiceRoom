@@ -1,49 +1,11 @@
 import { useState } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
+import { CssBaseline, ThemeProvider } from '@mui/material';
 import AppRouter from './components/AppRouter';
-import axios from 'axios';
-
-// Configure axios defaults
-axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
-
-// Create a custom theme
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-    background: {
-      default: '#f5f5f5',
-    },
-  },
-  typography: {
-    fontFamily: [
-      'Inter',
-      '-apple-system',
-      'BlinkMacSystemFont',
-      '"Segoe UI"',
-      'Roboto',
-      'Oxygen',
-      'Ubuntu',
-      'Cantarell',
-      '"Helvetica Neue"',
-      'sans-serif',
-    ].join(','),
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-        },
-      },
-    },
-  },
-});
+import { ProtectedRoute } from './features/auth';
+import { AuthProvider } from './contexts/AuthContext';
+import { theme } from './config/theme';
+import { axios } from './config/api';
 
 const App = () => {
   const [selectedScriptId, setSelectedScriptId] = useState<string | null>(null);
@@ -72,18 +34,22 @@ const App = () => {
 
   console.log('App component rendered with selectedScriptId:', selectedScriptId);
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
-        <AppRouter
-          selectedScriptId={selectedScriptId}
-          setSelectedScriptId={setSelectedScriptId}
-          onSelectScript={handleSelectScript}
-          onCreateNewScriptSuccess={handleCreateNewScriptSuccess}
-          onSaveScript={handleSaveScript}
-        />
-      </Router>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Router>
+          <ProtectedRoute>
+            <AppRouter
+              selectedScriptId={selectedScriptId}
+              setSelectedScriptId={setSelectedScriptId}
+              onSelectScript={handleSelectScript}
+              onCreateNewScriptSuccess={handleCreateNewScriptSuccess}
+              onSaveScript={handleSaveScript}
+            />
+          </ProtectedRoute>
+        </Router>
+      </ThemeProvider>
+    </AuthProvider>
   );
 };
 

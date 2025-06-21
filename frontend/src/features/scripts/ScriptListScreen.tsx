@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { 
   Box, 
   Typography, 
@@ -7,6 +6,7 @@ import {
   Button
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import { scriptService, type ScriptSummary } from '../../services';
 
 // Import reusable components
 import {
@@ -17,17 +17,7 @@ import {
   LoadingState,
   ErrorState,
   NotificationSnackbar,
-  ScriptSummary
 } from './scriptList';
-
-/**
- * Response interface for the scripts API endpoint
- */
-interface ScriptResponse {
-  scripts: ScriptSummary[];
-  totalPages: number;
-  currentPage: number;
-}
 
 /**
  * Props interface for the ScriptListScreen component
@@ -54,34 +44,30 @@ const ScriptListScreen: React.FC<ScriptListScreenProps> = ({
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string>('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'info' | 'warning' | 'error'>('info');
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [scriptToDelete, setScriptToDelete] = useState<ScriptSummary | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
-
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
   // Fetch all scripts from the backend API
   useEffect(() => {
-    fetchScripts(1);
+    fetchScripts();
   }, []);
 
-  const fetchScripts = async (page: number = 1) => {
+  const fetchScripts = async () => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await axios.get<ScriptResponse>('/api/scripts', {
-        params: { page }
-      });
-      console.log('Fetched scripts:', response.data);
+      const response = await scriptService.getScripts();
+      console.log('Fetched scripts:', response);
       
       // Update state with the response data
-      setScripts(response.data.scripts);
-      setCurrentPage(response.data.currentPage);
-      setTotalPages(response.data.totalPages);
-      
+      setScripts(response.scripts);
+      setCurrentPage(response.currentPage);
+      setTotalPages(response.totalPages);
       // Show a message if no scripts were returned from the backend
-      if (response.data.scripts.length === 0) {
+      if (response.scripts.length === 0) {
         showNotification('No scripts found. Create your first script to get started.', 'info');
       }
     } catch (err) {
@@ -102,19 +88,19 @@ const ScriptListScreen: React.FC<ScriptListScreenProps> = ({
     setIsCreatingScript(true);
     
     try {
-      const response = await axios.post<ScriptSummary >('/api/scripts', { 
+      const newScript = await scriptService.createScript({ 
         title: title.trim() 
       });
       
       // Add the new script to the list and close the dialog
-      setScripts(prev => [response.data, ...prev]);
+      setScripts(prev => [newScript, ...prev]);
       setIsCreateDialogOpen(false);
       
       // Show success message
       showNotification('Script created successfully!', 'success');
       
       // Navigate to the editor screen with the new script
-      onCreateNewScriptSuccess(response.data._id);
+      onCreateNewScriptSuccess(newScript._id);
     } catch (err) {
       console.error('Error creating script:', err);
       showNotification('Failed to create script. Please try again.', 'error');
@@ -137,7 +123,7 @@ const ScriptListScreen: React.FC<ScriptListScreenProps> = ({
     setIsDeleting(true);
     
     try {
-      await axios.delete(`/api/scripts/${scriptToDelete._id}`);
+      await scriptService.deleteScript(scriptToDelete._id);
       
       // Remove the deleted script from the list
       setScripts(prev => prev.filter(script => script._id !== scriptToDelete._id));
@@ -145,12 +131,9 @@ const ScriptListScreen: React.FC<ScriptListScreenProps> = ({
       // Show success message
       showNotification(`"${scriptToDelete.title}" deleted successfully`, 'success');
       
-      // If the list is now empty and we're not on the first page, go back one page
-      if (scripts.length === 1 && currentPage > 1) {
-        fetchScripts(currentPage - 1);
-      } else if (scripts.length === 1 && currentPage === 1) {
-        // If we just deleted the last script on the first page, refresh to show the empty state
-        fetchScripts(1);
+      // If the list is now empty, refresh to show the empty state
+      if (scripts.length === 1) {
+        fetchScripts();
       }
     } catch (err) {
       console.error('Error deleting script:', err);
@@ -205,7 +188,7 @@ const ScriptListScreen: React.FC<ScriptListScreenProps> = ({
       {error && (
         <ErrorState 
           error={error} 
-          onRetry={() => fetchScripts(1)} 
+          onRetry={() => fetchScripts()} 
           isRetrying={loading} 
         />
       )}

@@ -11,10 +11,11 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 // Import ScriptContainer component
-import ScriptContainer from "../components/ScriptContainer";
-import AddBlockButton from "../components/AddBlockButton";
+import { ScriptContainer } from "../scripts";
+import AddBlockButton from "./AddBlockButton";
 import { arrayMove } from "@dnd-kit/sortable";
-import { useScriptSocket } from "../hooks/useSocketIo";
+import { useScriptSocket } from "../../hooks/useSocketIo";
+
 import {
   ScriptBlock,
   ServerBlockAddedEvent,
@@ -27,11 +28,13 @@ import { BlockParamUpdates } from "@chatroom/shared/dist/SocketEvents";
 interface ScriptEditorScreenProps {
   scriptId: string;
   onNavigateBack: () => void; // Added for back navigation
+  hideAppBar?: boolean; // Whether to hide the built-in AppBar
 }
 
 const ScriptEditorScreen = ({
   scriptId,
   onNavigateBack,
+  hideAppBar = false,
 }: ScriptEditorScreenProps) => {
   const [scriptBlocks, setScriptBlocks] = useState<ScriptBlock[]>([]);
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);  const [scriptTitle, setScriptTitle] = useState<string>("");
@@ -252,37 +255,39 @@ const ScriptEditorScreen = ({
 
   return (
     <Box
-      sx={{ display: "flex", flexDirection: "column", height: "100vh" }}
+      sx={{ display: "flex", flexDirection: "column", height: hideAppBar ? "calc(100vh - 64px)" : "100vh" }}
       onClick={() => {
         setActiveBlockId(null);
       }}
     >
-      {/* Header */}
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="back"
-            sx={{ mr: 1 }}
-            onClick={onNavigateBack}
-          >
-            <ArrowBackIcon />
-          </IconButton>
+      {/* Header - Only show if not hidden */}
+      {!hideAppBar && (
+        <AppBar position="static">
+          <Toolbar>
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="back"
+              sx={{ mr: 1 }}
+              onClick={onNavigateBack}
+            >
+              <ArrowBackIcon />
+            </IconButton>
 
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            {isLoading ? (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <CircularProgress size={20} color="inherit" />
-                <span>Loading script...</span>
-              </Box>
-            ) : (
-              scriptTitle || scriptId
-            )}
-          </Typography>
-        </Toolbar>
-      </AppBar>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              {isLoading ? (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <CircularProgress size={20} color="inherit" />
+                  <span>Loading script...</span>
+                </Box>
+              ) : (
+                scriptTitle || scriptId
+              )}
+            </Typography>
+          </Toolbar>
+        </AppBar>
+      )}
 
       {/* Main Content Area */}
       <Box

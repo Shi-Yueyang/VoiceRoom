@@ -9,12 +9,7 @@ import {
   Divider
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-
-export interface ScriptSummary {
-  _id: string;
-  title: string;
-  lastModified: string;
-}
+import type { ScriptSummary } from '../../../types';
 
 interface ScriptItemProps {
   script: ScriptSummary;
@@ -53,7 +48,7 @@ const ScriptItem: React.FC<ScriptItemProps> = ({
         <ListItemButton onClick={() => onSelect(script._id)}>
           <ListItemText
             primary={script.title}
-            secondary={formatDate(script.lastModified)}
+            secondary={formatDate(script.updatedAt || script.lastModified)}
           />
         </ListItemButton>
       </ListItem>

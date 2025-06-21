@@ -1,9 +1,14 @@
 import express, { Request, Response } from "express";
 import http from "http";
 import cors from "cors";
+import dotenv from "dotenv";
 import scriptRouter from "./routers/ScriptRouter";
+import authRouter from "./auth/authRouter";
 import connectDB from "./config/db";
 import { InitializeSocketServer } from "./socket/SocketServer";
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
@@ -20,6 +25,7 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.use("/api/scripts", scriptRouter);
+app.use("/api/auth", authRouter);
 
 const startServer = async () => {
   try {

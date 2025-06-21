@@ -1,7 +1,11 @@
-import { Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Box } from '@mui/material';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
-import ScriptListScreen from './ScriptListScreen';
-import ScriptEditorScreen from './ScriptEditorScreen';
+import { ScriptListScreen } from '../features/scripts';
+import { ScriptEditorScreen } from '../features/editor';
+import { Navigation } from './ui';
 
 type AppRouterProps = {
   selectedScriptId: string | null;
@@ -12,18 +16,37 @@ type AppRouterProps = {
 };
 
 const ScriptEditorWrapper = ({ 
-  setSelectedScriptId, 
+  setSelectedScriptId,
 }: { 
-  setSelectedScriptId: (id: string | null) => void,
-  onSaveScript: (scriptId: string, data: any) => void
+  setSelectedScriptId: (id: string | null) => void;
+  onSaveScript: (scriptId: string, data: any) => void;
 }) => {
   const { scriptId } = useParams<{ scriptId: string }>();
   const navigate = useNavigate();
+  const [scriptTitle, setScriptTitle] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Set the selected script ID from URL parameter and fetch script data
+  // Fetch script data including title
+  useEffect(() => {
+    const fetchScriptData = async () => {
+      if (!scriptId) return;
+      setIsLoading(true);
+      try {
+        const response = await axios.get(`/api/scripts/${scriptId}`);
+        console.log("Fetched script data:", response.data);
+        if (response.data) {
+          setScriptTitle(response.data.title || "");
+        }
+      } catch (error) {
+        console.error("Error fetching script data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    fetchScriptData();
+  }, [scriptId]);
 
-  // Handle navigation back to script list
   const handleBack = () => {
     console.log('Navigating back to script list');
     setSelectedScriptId(null);
@@ -31,10 +54,19 @@ const ScriptEditorWrapper = ({
   };
 
   return (
-    <ScriptEditorScreen
-      scriptId={scriptId || ''}
-      onNavigateBack={handleBack}
-    />
+    <>
+      <Navigation 
+        isEditorMode={true}
+        scriptTitle={scriptTitle}
+        isLoadingScript={isLoading}
+        onNavigateBack={handleBack}
+      />
+      <ScriptEditorScreen
+        scriptId={scriptId || ''}
+        onNavigateBack={handleBack}
+        hideAppBar={true}
+      />
+    </>
   );
 };
 
@@ -45,32 +77,38 @@ const AppRouter = ({
   onCreateNewScriptSuccess,
   onSaveScript,
 }: AppRouterProps) => {
+  const location = useLocation();
+  const isEditorRoute = location.pathname.startsWith('/editor');
+
   return (
-    <Routes>
-      <Route 
-        path="/" 
-        element={
-          selectedScriptId ? (
-            <Navigate to={`/editor/${selectedScriptId}`} replace />
-          ) : (
-            <ScriptListScreen 
-              onSelectScript={onSelectScript} 
-              onCreateNewScriptSuccess={onCreateNewScriptSuccess} 
+    <Box>
+      {!isEditorRoute && <Navigation />}
+      <Routes>
+        <Route 
+          path="/" 
+          element={
+            selectedScriptId ? (
+              <Navigate to={`/editor/${selectedScriptId}`} replace />
+            ) : (
+              <ScriptListScreen 
+                onSelectScript={onSelectScript} 
+                onCreateNewScriptSuccess={onCreateNewScriptSuccess} 
+              />
+            )
+          } 
+        />
+        
+        <Route 
+          path="/editor/:scriptId" 
+          element={
+            <ScriptEditorWrapper 
+              setSelectedScriptId={setSelectedScriptId} 
+              onSaveScript={onSaveScript} 
             />
-          )
-        } 
-      />
-      
-      <Route 
-        path="/editor/:scriptId" 
-        element={
-          <ScriptEditorWrapper 
-            setSelectedScriptId={setSelectedScriptId} 
-            onSaveScript={onSaveScript} 
-          />
-        } 
-      />
-    </Routes>
+          } 
+        />
+      </Routes>
+    </Box>
   );
 };
 
