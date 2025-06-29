@@ -53,7 +53,7 @@ export const createScript = async (req: Request, res: Response):Promise<any> => 
     // Ensure blocks have proper position values
     blocks.forEach((block: IScriptBlock, index: number) => {
       block.position = index;
-      block.id = block.id || new mongoose.Types.ObjectId().toString();
+      block._id = block._id || new mongoose.Types.ObjectId().toString();
     });
 
     const newScript = new Script({
@@ -123,7 +123,7 @@ export const addBlockToScript = async (req: Request, res: Response):Promise<any>
 
     // Create new block
     const newBlock: IScriptBlock = {
-      id: new mongoose.Types.ObjectId().toString(),
+      _id: new mongoose.Types.ObjectId().toString(),
       type,
       position: position ?? script.blocks.length,
       blockParams
@@ -160,7 +160,7 @@ export const removeBlockFromScript = async (req: Request, res: Response):Promise
       return res.status(404).json({ error: 'Script not found' });
     }
     
-    const blockIndex = script.blocks.findIndex(block => block.id === blockId);
+    const blockIndex = script.blocks.findIndex(block => block._id === blockId);
     if (blockIndex === -1) {
       return res.status(404).json({ error: 'Block not found in script' });
     }
@@ -193,7 +193,7 @@ export const updateBlockInScript = async (req: Request, res: Response) :Promise<
       return res.status(404).json({ error: 'Script not found' });
     }
     
-    const blockIndex = script.blocks.findIndex(block => block.id === blockId);
+    const blockIndex = script.blocks.findIndex(block => block._id === blockId);
     if (blockIndex === -1) {
       return res.status(404).json({ error: 'Block not found in script' });
     }
@@ -231,8 +231,8 @@ export const reorderScriptBlocks = async (req: Request, res: Response) :Promise<
     });
     
     script.blocks.forEach(block => {
-      if (newPositions.has(block.id)) {
-        block.position = newPositions.get(block.id);
+      if (newPositions.has(block._id)) {
+        block.position = newPositions.get(block._id);
       }
     });
     
