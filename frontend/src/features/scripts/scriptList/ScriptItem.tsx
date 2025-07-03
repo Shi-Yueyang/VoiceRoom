@@ -48,7 +48,7 @@ const ScriptItem: React.FC<ScriptItemProps> = ({
         <ListItemButton onClick={() => onSelect(script._id)}>
           <ListItemText
             primary={script.title}
-            secondary={formatDate(script.updatedAt || script.lastModified)}
+            secondary={`Created by: ${script.creator || 'Unknown'} • ${formatDate(script.lastModified)}`}
           />
         </ListItemButton>
       </ListItem>

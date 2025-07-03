@@ -49,6 +49,7 @@ const ScriptListScreen: React.FC<ScriptListScreenProps> = ({
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
+
   // Fetch all scripts from the backend API
   useEffect(() => {
     fetchScripts();
@@ -60,7 +61,6 @@ const ScriptListScreen: React.FC<ScriptListScreenProps> = ({
     
     try {
       const response = await scriptService.getScripts();
-      console.log('Fetched scripts:', response);
       
       // Update state with the response data
       setScripts(response.scripts);
@@ -89,7 +89,7 @@ const ScriptListScreen: React.FC<ScriptListScreenProps> = ({
     
     try {
       const newScript = await scriptService.createScript({ 
-        title: title.trim() 
+        title: title.trim()
       });
       
       // Add the new script to the list and close the dialog

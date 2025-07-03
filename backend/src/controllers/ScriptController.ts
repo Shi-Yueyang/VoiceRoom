@@ -1,10 +1,8 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import Script, { 
-  ScriptDocument, 
-  IScriptBlock, 
-  IScriptBlockParams 
-} from '../models/Script';
+  IScriptBlock} from '../models/Script';
+import { AuthService } from '../auth';
 
 // Get all scripts (with optional pagination)
 export const getAllScripts = async (req: Request, res: Response):Promise<any> => {
@@ -14,11 +12,11 @@ export const getAllScripts = async (req: Request, res: Response):Promise<any> =>
     const skip = (page - 1) * limit;
 
     const scripts = await Script.find()
-      .select('title lastModified')
+      .select('title lastModified creator editors')
       .sort({ lastModified: -1 })
       .skip(skip)
       .limit(limit);
-
+    console.log('Fetched scripts:', scripts);
     const total = await Script.countDocuments();
 
     return res.status(200).json({
@@ -55,13 +53,15 @@ export const createScript = async (req: Request, res: Response):Promise<any> => 
       block.position = index;
       block._id = block._id || new mongoose.Types.ObjectId().toString();
     });
-
+    const token = req.header("Authorization")?.replace("Bearer","").trim()||"";
+    const user = await AuthService.validateToken(token);
+    const creator = user?._id;
     const newScript = new Script({
       title,
       blocks,
+      creator,
       lastModified: new Date()
     });
-
     const savedScript = await newScript.save();
     return res.status(201).json(savedScript);
   } catch (error) {

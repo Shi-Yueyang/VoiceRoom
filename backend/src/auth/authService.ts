@@ -78,12 +78,12 @@ export class AuthService {
 
     await user.save();
 
-    const token = this.generateToken((user._id as Types.ObjectId).toString());
+    const token = this.generateToken((user._id).toString());
 
     return {
       token,
       user: {
-        id: (user._id as Types.ObjectId).toString(),
+        id: (user._id ).toString(),
         username: user.username,
         email: user.email,
         createdAt: user.createdAt,
@@ -101,6 +101,7 @@ export class AuthService {
         { email: username }
       ]
     });
+    console.log("authService login",credentials,user)
 
     if (!user) {
       throw new Error("Invalid credentials");
@@ -112,12 +113,12 @@ export class AuthService {
       throw new Error("Invalid credentials");
     }
 
-    const token = this.generateToken((user._id as Types.ObjectId).toString());
+    const token = this.generateToken((user._id).toString());
 
     return {
       token,
       user: {
-        id: (user._id as Types.ObjectId).toString(),
+        id: (user._id ).toString(),
         username: user.username,
         email: user.email,
         createdAt: user.createdAt,

@@ -2,7 +2,8 @@
 export interface ScriptSummary {
   _id: string;
   title: string;
-  description?: string;
+  creator:string;
+  editors: string[]; // Array of user IDs who can edit the script
   createdAt: string;
   updatedAt: string;
   lastModified: string; // Alias for updatedAt for backwards compatibility

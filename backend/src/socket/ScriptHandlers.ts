@@ -37,10 +37,6 @@ export const registerScriptHandlers = (socket: Socket, io: Server): void => {
         throw new Error(`Script with ID ${scriptId} not found`);
       }
       
-      // Get the blocks array
-      const blocks = script.blocks;
-      
-
       
       // Add position to the block
       const blockWithPosition = {
@@ -52,7 +48,6 @@ export const registerScriptHandlers = (socket: Socket, io: Server): void => {
       
       // Save the script
       await script.save();
-      
       // Broadcast the event to all clients in the script room
       io.to(scriptId).emit('server:blockAdded', {
         scriptId,

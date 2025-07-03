@@ -5,7 +5,9 @@ import {
   Paper,
   Pagination
 } from '@mui/material';
-import ScriptItem, { ScriptSummary } from './ScriptItem';
+import ScriptItem from './ScriptItem';
+import { ScriptSummary } from '../../../types';
+
 
 interface ScriptListProps {
   scripts: ScriptSummary[];

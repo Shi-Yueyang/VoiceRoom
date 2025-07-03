@@ -12,7 +12,7 @@ export class AuthController {
         res.status(400).json({ error: "Username and password are required" });
         return;
       }
-
+      console.log("register");
       const result = await AuthService.register({ username, password, email });
         
       res.status(201).json({
@@ -44,7 +44,7 @@ export class AuthController {
         res.status(400).json({ error: "Username and password are required" });
         return;
       }
-
+      
       const result = await AuthService.login({ username, password });
       
       res.json({
@@ -99,7 +99,7 @@ export class AuthController {
       }
 
       await AuthService.updatePassword(
-        (req.user._id as Types.ObjectId).toString(),
+        (req.user._id).toString(),
         currentPassword,
         newPassword
       );

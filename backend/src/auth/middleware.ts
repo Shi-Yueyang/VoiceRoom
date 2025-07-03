@@ -21,7 +21,7 @@ export const authenticate = async (
 
     const jwtSecret = process.env.JWT_SECRET || "fallback-secret-key";
     const decoded = jwt.verify(token, jwtSecret) as { id: string };
-
+    console.log("Decoded JWT:", decoded);
     const user = await User.findById(decoded.id).select("-passwordHash");
     if (!user) {
       res.status(401).json({ error: "Token is not valid" });
