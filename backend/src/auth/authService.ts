@@ -101,7 +101,6 @@ export class AuthService {
         { email: username }
       ]
     });
-    console.log("authService login",credentials,user)
 
     if (!user) {
       throw new Error("Invalid credentials");

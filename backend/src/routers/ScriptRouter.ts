@@ -3,17 +3,22 @@ import {
   getAllScripts,
   getScriptById,
   createScript,
-  deleteScript
+  deleteScript,
+  addEditorToScript,
+  getEditorsOfScript
 } from '../controllers/ScriptController';
+import { authenticate } from '../auth/middleware';
 
 // Initialize router
 const scriptRouter = Router();
 
-// Define routes
-scriptRouter.get('/', getAllScripts);
-scriptRouter.get('/:id', getScriptById);
-scriptRouter.post('/', createScript);
-scriptRouter.delete('/:id', deleteScript);
+// Define routes - all require authentication
+scriptRouter.get('/', authenticate, getAllScripts);
+scriptRouter.get('/:id', authenticate, getScriptById);
+scriptRouter.post('/', authenticate, createScript);
+scriptRouter.post('/:id/editors', authenticate, addEditorToScript);
+scriptRouter.get('/:id/editors', authenticate, getEditorsOfScript);
+scriptRouter.delete('/:id', authenticate, deleteScript);
 
 // Export router
 export default scriptRouter;

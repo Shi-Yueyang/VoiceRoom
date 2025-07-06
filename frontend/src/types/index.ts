@@ -2,8 +2,14 @@
 export interface ScriptSummary {
   _id: string;
   title: string;
-  creator:string;
-  editors: string[]; // Array of user IDs who can edit the script
+  creator: {
+    _id: string;
+    username: string;
+  } | string; // Can be populated object or just ID string
+  editors: Array<{
+    _id: string;
+    username: string;
+  }> | string[]; // Array of populated user objects or just IDs
   createdAt: string;
   updatedAt: string;
   lastModified: string; // Alias for updatedAt for backwards compatibility

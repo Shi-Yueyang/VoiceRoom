@@ -88,9 +88,7 @@ const Navigation: React.FC<NavigationProps> = ({
         
         {user && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2">
-              Welcome, {user.username}
-            </Typography>
+
             
             <IconButton
               size="large"

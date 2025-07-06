@@ -13,6 +13,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 // Import ScriptContainer component
 import { ScriptContainer } from "../scripts";
 import AddBlockButton from "./AddBlockButton";
+import AddEditorButton from "./AddEditorButton";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useScriptSocket } from "../../hooks/useSocketIo";
 
@@ -44,7 +45,7 @@ const ScriptEditorScreen = ({
   // Wrap socket event handlers in useCallback to prevent unnecessary reconnections
   const onServerBlockAdded = useCallback((event: ServerBlockAddedEvent) => {
     console.log("Block added via socket:", event);
-    setScriptBlocks((prevBlocks) => [...prevBlocks, event.block]);
+    setScriptBlocks((prevBlocks) => [...prevBlocks, event.block].sort((a, b) => a.position - b.position));
   }, []);
 
   const onServerBlockUpdated = useCallback((event: ServerBlockUpdatedEvent) => {
@@ -109,7 +110,6 @@ const ScriptEditorScreen = ({
       setIsLoading(true);
       try {
         const response = await axios.get(`/api/scripts/${scriptId}`);
-        console.log("Fetched script data:", response.data);
         if (response.data) {
           setScriptTitle(response.data.title || "");
 
@@ -195,8 +195,7 @@ const ScriptEditorScreen = ({
     };
 
     // Insert the new block and sort by position
-    const updatedBlocks = [...scriptBlocks, newBlock].sort((a, b) => a.position - b.position);
-    setScriptBlocks(updatedBlocks);
+
     setActiveBlockId(newBlock._id);
 
     addBlockInSocket(newBlock); // Assuming no preceding block for simplicity
@@ -310,6 +309,13 @@ const ScriptEditorScreen = ({
       </Box>
 
       <AddBlockButton onAddBlock={handleAddBlock} />
+      <AddEditorButton 
+        scriptId={scriptId}
+        onEditorAdded={(username) => {
+          console.log(`Editor ${username} added successfully`);
+          // Optionally refresh script data or show notification
+        }}
+      />
     </Box>
   );
 };

@@ -33,7 +33,6 @@ const ScriptEditorWrapper = ({
       setIsLoading(true);
       try {
         const response = await axios.get(`/api/scripts/${scriptId}`);
-        console.log("Fetched script data:", response.data);
         if (response.data) {
           setScriptTitle(response.data.title || "");
         }

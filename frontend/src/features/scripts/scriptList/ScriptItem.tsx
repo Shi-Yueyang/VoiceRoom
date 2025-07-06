@@ -26,6 +26,7 @@ const ScriptItem: React.FC<ScriptItemProps> = ({
   onDelete,
   formatDate 
 }) => {
+  
   return (
     <Box>
       {showDivider && <Divider />}
@@ -48,7 +49,31 @@ const ScriptItem: React.FC<ScriptItemProps> = ({
         <ListItemButton onClick={() => onSelect(script._id)}>
           <ListItemText
             primary={script.title}
-            secondary={`Created by: ${script.creator || 'Unknown'} • ${formatDate(script.lastModified)}`}
+            secondary={
+              <Box component="span">
+                <Box component="div" sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                  Created by: {
+                    typeof script.creator === 'object' 
+                      ? script.creator.username 
+                      : script.creator || 'Unknown'
+                  }
+                </Box>
+                <Box component="div" sx={{ fontSize: '0.875rem', color: 'text.secondary', mt: 0.25 }}>
+                  Editors: {
+                    Array.isArray(script.editors) && script.editors.length > 0
+                      ? script.editors
+                          .map(editor => 
+                            typeof editor === 'object' ? editor.username : editor
+                          )
+                          .join(', ')
+                      : 'None'
+                  }
+                </Box>
+                <Box component="div" sx={{ fontSize: '0.75rem', color: 'text.disabled', mt: 0.25 }}>
+                  Last modified: {formatDate(script.lastModified)}
+                </Box>
+              </Box>
+            }
           />
         </ListItemButton>
       </ListItem>

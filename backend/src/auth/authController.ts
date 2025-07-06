@@ -64,20 +64,26 @@ export class AuthController {
 
   static async getProfile(req: AuthRequest, res: Response): Promise<void> {
     try {
-      if (!req.user) {
-        res.status(401).json({ error: "User not authenticated" });
+      const userId = req.user?._id;
+      if (!userId) {
+        res.status(401).json({ error: 'User not authenticated' });
         return;
       }
-
+      
+      const result = await AuthService.getUserById(userId.toString());
+      if(!result){
+        res.status(401).json({error:`User with id ${userId} not found`});
+        return;
+      }
       res.json({
+        message:"Get profile successful",
         user: {
-          id: req.user._id,
-          username: req.user.username,
-          email: req.user.email,
-          createdAt: req.user.createdAt,
-          updatedAt: req.user.updatedAt,
-        },
-      });
+          id: result._id.toString(),
+          username: result.username,
+          email: result.email
+        }
+      })
+      
     } catch (error) {
       console.error("Get profile error:", error);
       res.status(500).json({ error: "Failed to get profile" });
