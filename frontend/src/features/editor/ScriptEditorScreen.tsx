@@ -2,13 +2,16 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
   Box,
-  AppBar,
-  Toolbar,
   Typography,
-  IconButton,
-  CircularProgress,
+  Card,
+  CardContent,
+  Avatar,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Divider,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 // Import ScriptContainer component
 import { ScriptContainer } from "../scripts";
@@ -35,17 +38,33 @@ interface ScriptEditorScreenProps {
 
 const ScriptEditorScreen = ({
   scriptId,
-  onNavigateBack,
-  hideAppBar = false,
 }: ScriptEditorScreenProps) => {
   const [scriptBlocks, setScriptBlocks] = useState<ScriptBlock[]>([]);
-  const [activeBlockId, setActiveBlockId] = useState<string | null>(null);  const [scriptTitle, setScriptTitle] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+
+  // Mock active users data - replace with real data later
+  const [activeUsers] = useState([
+    {
+      id: "1",
+      name: "Sophia",
+      status: "Editing Block 3",
+      avatar: "/avatars/sophia.jpg",
+    },
+    { id: "2", name: "Liam", status: "Viewing", avatar: "/avatars/liam.jpg" },
+    {
+      id: "3",
+      name: "Olivia",
+      status: "Viewing",
+      avatar: "/avatars/olivia.jpg",
+    },
+  ]);
 
   // Wrap socket event handlers in useCallback to prevent unnecessary reconnections
   const onServerBlockAdded = useCallback((event: ServerBlockAddedEvent) => {
     console.log("Block added via socket:", event);
-    setScriptBlocks((prevBlocks) => [...prevBlocks, event.block].sort((a, b) => a.position - b.position));
+    setScriptBlocks((prevBlocks) =>
+      [...prevBlocks, event.block].sort((a, b) => a.position - b.position)
+    );
   }, []);
 
   const onServerBlockUpdated = useCallback((event: ServerBlockUpdatedEvent) => {
@@ -79,23 +98,28 @@ const ScriptEditorScreen = ({
       const movedBlockIndex = updatedBlocks.findIndex(
         (block) => block._id === event.blockId
       );
-      
+
       if (movedBlockIndex !== -1) {
         // Adjust the position of the moved block
         updatedBlocks[movedBlockIndex] = {
           ...updatedBlocks[movedBlockIndex],
           position: event.newPosition,
         };
-        
+
         // Sort the blocks by position after moving
         return updatedBlocks.sort((a, b) => a.position - b.position);
       }
-      
+
       return updatedBlocks;
     });
   }, []);
 
-  const { addBlockInSocket, updateBlockInSocket, deleteBlockInSocket, moveBlockInSocket } = useScriptSocket({
+  const {
+    addBlockInSocket,
+    updateBlockInSocket,
+    deleteBlockInSocket,
+    moveBlockInSocket,
+  } = useScriptSocket({
     scriptId,
     onServerBlockAdded,
     onServerBlockUpdated,
@@ -107,23 +131,21 @@ const ScriptEditorScreen = ({
   useEffect(() => {
     const fetchScriptData = async () => {
       if (!scriptId) return;
-      setIsLoading(true);
       try {
         const response = await axios.get(`/api/scripts/${scriptId}`);
         if (response.data) {
-          setScriptTitle(response.data.title || "");
 
           if (response.data.blocks) {
             // Sort blocks by position to ensure correct order
-            const sortedBlocks = response.data.blocks.sort((a: ScriptBlock, b: ScriptBlock) => a.position - b.position);
+            const sortedBlocks = response.data.blocks.sort(
+              (a: ScriptBlock, b: ScriptBlock) => a.position - b.position
+            );
             setScriptBlocks(sortedBlocks);
           }
         }
       } catch (error) {
         console.error("Error fetching script data:", error);
-      } finally {
-        setIsLoading(false);
-      }
+      } 
     };
 
     fetchScriptData();
@@ -159,15 +181,17 @@ const ScriptEditorScreen = ({
 
     // Calculate position for the new block
     let newPosition = 4096; // Default position if no blocks exist
-    
+
     if (scriptBlocks.length > 0) {
       if (activeBlockId) {
         // Find the position of the currently active block
-        const activeBlockIndex = scriptBlocks.findIndex(block => block._id === activeBlockId);
+        const activeBlockIndex = scriptBlocks.findIndex(
+          (block) => block._id === activeBlockId
+        );
         if (activeBlockIndex !== -1) {
           const activeBlock = scriptBlocks[activeBlockIndex];
           const nextBlock = scriptBlocks[activeBlockIndex + 1];
-          
+
           if (nextBlock) {
             // Insert between active block and next block
             newPosition = (activeBlock.position + nextBlock.position) / 2;
@@ -177,12 +201,16 @@ const ScriptEditorScreen = ({
           }
         } else {
           // If active block not found, add at the end
-          const maxPosition = Math.max(...scriptBlocks.map(block => block.position));
+          const maxPosition = Math.max(
+            ...scriptBlocks.map((block) => block.position)
+          );
           newPosition = maxPosition + 4096;
         }
       } else {
         // No active block, add at the end
-        const maxPosition = Math.max(...scriptBlocks.map(block => block.position));
+        const maxPosition = Math.max(
+          ...scriptBlocks.map((block) => block.position)
+        );
         newPosition = maxPosition + 4096;
       }
     }
@@ -201,11 +229,17 @@ const ScriptEditorScreen = ({
     addBlockInSocket(newBlock); // Assuming no preceding block for simplicity
   };
 
-  const handleUpdateBlock = (blockId: string, blockParamUpdates: BlockParamUpdates) => {
+  const handleUpdateBlock = (
+    blockId: string,
+    blockParamUpdates: BlockParamUpdates
+  ) => {
     setScriptBlocks(
       scriptBlocks.map((block) =>
         block._id === blockId
-          ? { ...block, blockParams: { ...block.blockParams, ...blockParamUpdates } }
+          ? {
+              ...block,
+              blockParams: { ...block.blockParams, ...blockParamUpdates },
+            }
           : block
       )
     );
@@ -214,19 +248,21 @@ const ScriptEditorScreen = ({
   };
 
   const handleRearrangeBlocks = (oldIndex: number, newIndex: number) => {
-
     setScriptBlocks((prevBlocks) => {
       // First, move the block to the new position in the array
       const rearrangedBlocks = arrayMove(prevBlocks, oldIndex, newIndex);
-      
+
       // Only adjust the position of the moved block
       const movedBlock = rearrangedBlocks[newIndex];
       let newPosition = movedBlock.position;
-      
+
       // Calculate new position based on neighbors
       const prevBlock = newIndex > 0 ? rearrangedBlocks[newIndex - 1] : null;
-      const nextBlock = newIndex < rearrangedBlocks.length - 1 ? rearrangedBlocks[newIndex + 1] : null;
-      
+      const nextBlock =
+        newIndex < rearrangedBlocks.length - 1
+          ? rearrangedBlocks[newIndex + 1]
+          : null;
+
       if (prevBlock && nextBlock) {
         // Insert between two blocks
         newPosition = (prevBlock.position + nextBlock.position) / 2;
@@ -244,78 +280,128 @@ const ScriptEditorScreen = ({
       // Update only the moved block's position
       rearrangedBlocks[newIndex] = {
         ...movedBlock,
-        position: newPosition
+        position: newPosition,
       };
-      
+
       return rearrangedBlocks;
     });
-
-
   };
 
   return (
     <Box
-      sx={{ display: "flex", flexDirection: "column", height: hideAppBar ? "calc(100vh - 64px)" : "100vh" }}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height:  "100vh"
+      }}
       onClick={() => {
         setActiveBlockId(null);
       }}
     >
-      {/* Header - Only show if not hidden */}
-      {!hideAppBar && (
-        <AppBar position="static">
-          <Toolbar>
-            <IconButton
-              size="large"
-              edge="start"
-              color="inherit"
-              aria-label="back"
-              sx={{ mr: 1 }}
-              onClick={onNavigateBack}
-            >
-              <ArrowBackIcon />
-            </IconButton>
 
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              {isLoading ? (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <CircularProgress size={20} color="inherit" />
-                  <span>Loading script...</span>
-                </Box>
-              ) : (
-                scriptTitle || scriptId
-              )}
-            </Typography>
-          </Toolbar>
-        </AppBar>
-      )}
 
       {/* Main Content Area */}
       <Box
         sx={{
           flexGrow: 1,
-          overflowY: "auto",
-          padding: 2,
-          paddingBottom: "80px", // Space for FAB
+          display: "flex",
+          overflow: "hidden",
         }}
       >
-        <ScriptContainer
-          scriptBlocks={scriptBlocks}
-          activeBlockId={activeBlockId}
-          onSelectBlock={handleSelectBlock}
-          onDeleteBlock={handleDeleteBlock}
-          onUpdateBlock={handleUpdateBlock}
-          onRearrangeBlocks={handleRearrangeBlocks}
-        />
-      </Box>
+        {/* Left Side - Script Editor */}
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflowY: "auto",
+            padding: 2,
+            paddingBottom: "80px", // Space for FAB
+          }}
+        >
+          {/* Search Bar */}
 
-      <AddBlockButton onAddBlock={handleAddBlock} />
-      <AddEditorButton 
-        scriptId={scriptId}
-        onEditorAdded={(username) => {
-          console.log(`Editor ${username} added successfully`);
-          // Optionally refresh script data or show notification
-        }}
-      />
+
+          {/* Script Container */}
+          <ScriptContainer
+            scriptBlocks={scriptBlocks}
+            activeBlockId={activeBlockId}
+            onSelectBlock={handleSelectBlock}
+            onDeleteBlock={handleDeleteBlock}
+            onUpdateBlock={handleUpdateBlock}
+            onRearrangeBlocks={handleRearrangeBlocks}
+          />
+
+          {/* Add Block Button - Positioned in left area */}
+          <AddBlockButton onAddBlock={handleAddBlock} />
+        </Box>
+
+        {/* Right Sidebar - Active Users */}
+        <Box
+          sx={{
+            width: 280,
+            borderLeft: 1,
+            borderColor: "divider",
+            backgroundColor: "background.paper",
+            overflowY: "auto",
+          }}
+        >
+          <Card
+            sx={{
+              margin: 2,
+              boxShadow: "none",
+              border: 1,
+              borderColor: "divider",
+            }}
+          >
+            <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+              <Typography variant="h6" gutterBottom>
+                编辑者
+              </Typography>
+              <List disablePadding>
+                {activeUsers.map((user, index) => (
+                  <Box key={user.id}>
+                    <ListItem disablePadding sx={{ py: 1 }}>
+                      <ListItemAvatar>
+                        <Avatar
+                          src={user.avatar}
+                          alt={user.name}
+                          sx={{ width: 40, height: 40 }}
+                        >
+                          {user.name.charAt(0)}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Typography variant="subtitle2" fontWeight="medium">
+                            {user.name}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography variant="caption" color="text.secondary">
+                            {user.status}
+                          </Typography>
+                        }
+                        sx={{ ml: 1 }}
+                      />
+                    </ListItem>
+                    {index < activeUsers.length - 1 && (
+                      <Divider sx={{ mx: 2 }} />
+                    )}
+                  </Box>
+                ))}
+              </List>
+            </CardContent>
+          </Card>
+          <AddEditorButton
+            scriptId={scriptId}
+            onEditorAdded={(username) => {
+              console.log(`Editor ${username} added successfully`);
+              // Optionally refresh script data or show notification
+            }}
+          />
+        </Box>
+      </Box>
     </Box>
   );
 };

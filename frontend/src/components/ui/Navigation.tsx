@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   AppBar,
   Toolbar,
@@ -9,10 +9,14 @@ import {
   MenuItem,
   IconButton,
   CircularProgress,
-} from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useAuth } from '../../contexts/AuthContext';
-import scriptEditorIcon from '../../assets/script-editor.svg';
+  styled,
+  alpha,
+  InputBase,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { useAuth } from "../../contexts/AuthContext";
+import scriptEditorIcon from "../../assets/script-editor.svg";
+import SearchIcon from "@mui/icons-material/Search";
 
 interface NavigationProps {
   // Editor mode props
@@ -21,7 +25,45 @@ interface NavigationProps {
   isLoadingScript?: boolean;
   onNavigateBack?: () => void;
 }
+const Search = styled("div")(({ theme }) => ({
+  position: "relative",
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: alpha(theme.palette.common.white, 0.15),
+  "&:hover": {
+    backgroundColor: alpha(theme.palette.common.white, 0.25),
+  },
+  marginRight: theme.spacing(2),
+  marginLeft: 0,
+  width: "100%",
+  [theme.breakpoints.up("sm")]: {
+    marginLeft: theme.spacing(3),
+    width: "auto",
+  },
+}));
 
+const SearchIconWrapper = styled("div")(({ theme }) => ({
+  padding: theme.spacing(0, 2),
+  height: "100%",
+  position: "absolute",
+  pointerEvents: "none",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+}));
+
+const StyledInputBase = styled(InputBase)(({ theme }) => ({
+  color: "inherit",
+  "& .MuiInputBase-input": {
+    padding: theme.spacing(1, 1, 1, 0),
+    // vertical padding + font size from searchIcon
+    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
+    transition: theme.transitions.create("width"),
+    width: "100%",
+    [theme.breakpoints.up("md")]: {
+      width: "20ch",
+    },
+  },
+}));
 const Navigation: React.FC<NavigationProps> = ({
   isEditorMode = false,
   scriptTitle,
@@ -74,10 +116,12 @@ const Navigation: React.FC<NavigationProps> = ({
           </>
         ) : (
           // Default mode: Logo + App title
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
-            <img 
-              src={scriptEditorIcon} 
-              alt="Script Editor" 
+          <Box
+            sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }}
+          >
+            <img
+              src={scriptEditorIcon}
+              alt="Script Editor"
               style={{ width: 24, height: 24 }}
             />
             <Typography variant="h6" component="div">
@@ -85,11 +129,18 @@ const Navigation: React.FC<NavigationProps> = ({
             </Typography>
           </Box>
         )}
-        
-        {user && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Search>
+          <SearchIconWrapper>
+            <SearchIcon />
+          </SearchIconWrapper>
+          <StyledInputBase
+            placeholder="Search…"
+            inputProps={{ "aria-label": "search" }}
+          />
+        </Search>
 
-            
+        {user && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <IconButton
               size="large"
               edge="end"
@@ -98,21 +149,21 @@ const Navigation: React.FC<NavigationProps> = ({
               onClick={handleMenuOpen}
               color="inherit"
             >
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: "secondary.main" }}>
                 {user.username.charAt(0).toUpperCase()}
               </Avatar>
             </IconButton>
-            
+
             <Menu
               anchorEl={anchorEl}
               anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
+                vertical: "bottom",
+                horizontal: "right",
               }}
               keepMounted
               transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
+                vertical: "top",
+                horizontal: "right",
               }}
               open={Boolean(anchorEl)}
               onClose={handleMenuClose}

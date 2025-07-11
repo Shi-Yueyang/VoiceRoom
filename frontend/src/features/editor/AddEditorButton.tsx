@@ -16,35 +16,19 @@ import axios from "axios";
 interface AddEditorButtonProps {
   scriptId: string;
   onEditorAdded?: (editorUsername: string) => void;
-  isOpen?: boolean; // External control of modal
-  onClose?: () => void; // External close handler
-  hideFab?: boolean; // Option to hide FAB when controlled externally
 }
 
-const AddEditorButton = ({ 
-  scriptId, 
-  onEditorAdded,
-  isOpen: externalIsOpen,
-  onClose: externalOnClose,
-  hideFab = false
-}: AddEditorButtonProps) => {
+const AddEditorButton = ({ scriptId, onEditorAdded }: AddEditorButtonProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Use external control if provided, otherwise use internal state
-  const modalOpen = externalIsOpen !== undefined ? externalIsOpen : isModalOpen;
-  
   const toggleModal = () => {
-    if (externalOnClose) {
-      externalOnClose();
-    } else {
-      setIsModalOpen(!isModalOpen);
-    }
+    setIsModalOpen(!isModalOpen);
     // Reset form when opening/closing
-    if (!modalOpen) {
+    if (!isModalOpen) {
       setUsername("");
       setError("");
       setSuccess("");
@@ -72,11 +56,7 @@ const AddEditorButton = ({
       
       // Close modal after a short delay to show success message
       setTimeout(() => {
-        if (externalOnClose) {
-          externalOnClose();
-        } else {
-          setIsModalOpen(false);
-        }
+        setIsModalOpen(false);
         setSuccess("");
       }, 1500);
     } catch (error: any) {

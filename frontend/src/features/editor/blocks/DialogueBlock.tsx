@@ -30,17 +30,13 @@ const DialogueBlock = ({
   const [isEditing, setIsEditing] = useState<boolean>(isActive);
 
   useEffect(() => {
-    if (isActive) {
-      setIsEditing(true);
-    }
+    setIsEditing(isActive);
   }, [isActive]);
 
   // Handler for clicking on the block
   const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.stopPropagation();
-    if (!isEditing) {
-      onSelect(id);
-    }
+    onSelect(id);
   };
 
   // Handler for delete button
@@ -89,7 +85,12 @@ const DialogueBlock = ({
               size="small"
               label="角色"
               value={dialogueBlockParams.characterName}
-              onChange={(e) => onUpdate(id, { characterName: e.target.value })}
+              onChange={(e) =>
+                onUpdate(id, {
+                  characterName: e.target.value,
+                  text: dialogueBlockParams.text,
+                })
+              }
               margin="dense"
               InputProps={{
                 style: {
@@ -104,7 +105,12 @@ const DialogueBlock = ({
             />
             <TextareaAutosize
               value={dialogueBlockParams.text}
-              onChange={(e) => onUpdate(id, { text: e.target.value })}
+              onChange={(e) =>
+                onUpdate(id, {
+                  characterName: dialogueBlockParams.characterName,
+                  text: e.target.value,
+                })
+              }
               minRows={2}
               style={{
                 width: "100%",
