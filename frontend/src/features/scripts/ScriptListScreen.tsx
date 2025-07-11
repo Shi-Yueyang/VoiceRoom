@@ -25,6 +25,7 @@ import {
 interface ScriptListScreenProps {
   onSelectScript: (scriptId: string) => void;
   onCreateNewScriptSuccess: (newScriptId: string) => void;
+  searchTerm?: string;
 }
 
 /**
@@ -32,7 +33,8 @@ interface ScriptListScreenProps {
  */
 const ScriptListScreen: React.FC<ScriptListScreenProps> = ({ 
   onSelectScript, 
-  onCreateNewScriptSuccess 
+  onCreateNewScriptSuccess,
+  searchTerm = ''
 }) => {
   
   // State declarations
@@ -164,6 +166,23 @@ const ScriptListScreen: React.FC<ScriptListScreenProps> = ({
     }).format(date);
   };
 
+  // Filter scripts based on search term
+  const filteredScripts = scripts.filter(script => {
+    if (!searchTerm.trim()) return true;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      script.title.toLowerCase().includes(searchLower) ||
+      (typeof script.creator === 'object' 
+        ? script.creator.username.toLowerCase().includes(searchLower)
+        : false) ||
+      (Array.isArray(script.editors) && script.editors.some(editor =>
+        typeof editor === 'object' 
+          ? editor.username.toLowerCase().includes(searchLower)
+          : false
+      ))
+    );
+  });
+
   return (
     <Container maxWidth="sm" sx={{ py: 2 }}>
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -194,14 +213,26 @@ const ScriptListScreen: React.FC<ScriptListScreenProps> = ({
       )}
 
       {/* Empty state */}
-      {!loading && !error && scripts.length === 0 && (
+      {!loading && !error && filteredScripts.length === 0 && scripts.length === 0 && (
         <EmptyScriptList onCreateNew={() => setIsCreateDialogOpen(true)} />
       )}
 
+      {/* No search results */}
+      {!loading && !error && filteredScripts.length === 0 && scripts.length > 0 && searchTerm.trim() && (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="h6" color="text.secondary">
+            No scripts found matching "{searchTerm}"
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Try adjusting your search terms
+          </Typography>
+        </Box>
+      )}
+
       {/* Script list */}
-      {!loading && !error && scripts.length > 0 && (
+      {!loading && !error && filteredScripts.length > 0 && (
         <ScriptList
-          scripts={scripts}
+          scripts={filteredScripts}
           currentPage={currentPage}
           totalPages={totalPages}
           onSelectScript={onSelectScript}

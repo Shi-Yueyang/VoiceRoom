@@ -34,10 +34,12 @@ interface ScriptEditorScreenProps {
   scriptId: string;
   onNavigateBack: () => void; // Added for back navigation
   hideAppBar?: boolean; // Whether to hide the built-in AppBar
+  searchTerm?: string; // Search term for filtering blocks
 }
 
 const ScriptEditorScreen = ({
   scriptId,
+  searchTerm = '',
 }: ScriptEditorScreenProps) => {
   const [scriptBlocks, setScriptBlocks] = useState<ScriptBlock[]>([]);
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
@@ -287,6 +289,33 @@ const ScriptEditorScreen = ({
     });
   };
 
+  // Filter blocks based on search term
+  const filteredBlocks = scriptBlocks.filter(block => {
+    if (!searchTerm.trim()) return scriptBlocks;
+    const searchLower = searchTerm.toLowerCase();
+    
+    // Search in block content based on block type
+    if (block.type === 'sceneHeading') {
+      const params = block.blockParams as any;
+      return (
+        params.intExt?.toLowerCase().includes(searchLower) ||
+        params.location?.toLowerCase().includes(searchLower) ||
+        params.time?.toLowerCase().includes(searchLower)
+      );
+    } else if (block.type === 'description') {
+      const params = block.blockParams as any;
+      return params.text?.toLowerCase().includes(searchLower);
+    } else if (block.type === 'dialogue') {
+      const params = block.blockParams as any;
+      return (
+        params.characterName?.toLowerCase().includes(searchLower) ||
+        params.text?.toLowerCase().includes(searchLower)
+      );
+    }
+    return false;
+  });
+
+
   return (
     <Box
       sx={{
@@ -298,7 +327,6 @@ const ScriptEditorScreen = ({
         setActiveBlockId(null);
       }}
     >
-
 
       {/* Main Content Area */}
       <Box
@@ -319,12 +347,22 @@ const ScriptEditorScreen = ({
             paddingBottom: "80px", // Space for FAB
           }}
         >
-          {/* Search Bar */}
 
+          {/* No search results message */}
+          {searchTerm.trim() && filteredBlocks.length === 0 && scriptBlocks.length > 0 && (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="h6" color="text.secondary">
+                No blocks found matching "{searchTerm}"
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Try adjusting your search terms
+              </Typography>
+            </Box>
+          )}
 
           {/* Script Container */}
           <ScriptContainer
-            scriptBlocks={scriptBlocks}
+            scriptBlocks={filteredBlocks}
             activeBlockId={activeBlockId}
             onSelectBlock={handleSelectBlock}
             onDeleteBlock={handleDeleteBlock}

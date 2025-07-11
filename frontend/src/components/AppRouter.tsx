@@ -1,71 +1,35 @@
 import { Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Box } from '@mui/material';
-import { useState, useEffect } from 'react';
-import axios from 'axios';
 
 import { ScriptListScreen } from '../features/scripts';
 import { ScriptEditorScreen } from '../features/editor';
 import { Navigation } from './ui';
+import { useState } from 'react';
 
-type AppRouterProps = {
+interface AppRouterProps {
   selectedScriptId: string | null;
   setSelectedScriptId: (id: string | null) => void;
   onSelectScript: (scriptId: string) => void;
   onCreateNewScriptSuccess: (newScriptId: string) => void;
-  onSaveScript: (scriptId: string, data: any) => void;
-};
+}
 
-const ScriptEditorWrapper = ({ 
-  setSelectedScriptId,
+// Wrapper component to handle editor route params
+const EditorWrapper = ({ 
+  onNavigateBack, 
+  searchTerm 
 }: { 
-  setSelectedScriptId: (id: string | null) => void;
-  onSaveScript: (scriptId: string, data: any) => void;
+  onNavigateBack: () => void;
+  searchTerm: string;
 }) => {
   const { scriptId } = useParams<{ scriptId: string }>();
-  const navigate = useNavigate();
-  const [scriptTitle, setScriptTitle] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // Fetch script data including title
-  useEffect(() => {
-    const fetchScriptData = async () => {
-      if (!scriptId) return;
-      setIsLoading(true);
-      try {
-        const response = await axios.get(`/api/scripts/${scriptId}`);
-        if (response.data) {
-          setScriptTitle(response.data.title || "");
-        }
-      } catch (error) {
-        console.error("Error fetching script data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchScriptData();
-  }, [scriptId]);
-
-  const handleBack = () => {
-    console.log('Navigating back to script list');
-    setSelectedScriptId(null);
-    navigate('/');
-  };
-
+  
   return (
-    <>
-      <Navigation 
-        isEditorMode={true}
-        scriptTitle={scriptTitle}
-        isLoadingScript={isLoading}
-        onNavigateBack={handleBack}
-      />
-      <ScriptEditorScreen
-        scriptId={scriptId || ''}
-        onNavigateBack={handleBack}
-        hideAppBar={true}
-      />
-    </>
+    <ScriptEditorScreen
+      scriptId={scriptId ?? ''}
+      onNavigateBack={onNavigateBack}
+      hideAppBar={true}
+      searchTerm={searchTerm}
+    />
   );
 };
 
@@ -74,37 +38,47 @@ const AppRouter = ({
   setSelectedScriptId,
   onSelectScript,
   onCreateNewScriptSuccess,
-  onSaveScript,
 }: AppRouterProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isEditorRoute = location.pathname.startsWith('/editor');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const handleBack = () => {
+    setSelectedScriptId(null);
+    navigate('/', { replace: true });
+  };
 
   return (
-    <Box>
-      {!isEditorRoute && <Navigation />}
+    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Navigation
+        isEditorMode={isEditorRoute}
+        onNavigateBack={isEditorRoute ? handleBack : undefined}
+        onSearch={setSearchTerm}
+      />
       <Routes>
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
             selectedScriptId ? (
               <Navigate to={`/editor/${selectedScriptId}`} replace />
             ) : (
-              <ScriptListScreen 
-                onSelectScript={onSelectScript} 
-                onCreateNewScriptSuccess={onCreateNewScriptSuccess} 
+              <ScriptListScreen
+                onSelectScript={onSelectScript}
+                onCreateNewScriptSuccess={onCreateNewScriptSuccess}
+                searchTerm={searchTerm}
               />
             )
-          } 
+          }
         />
-        
-        <Route 
-          path="/editor/:scriptId" 
+        <Route
+          path="/editor/:scriptId"
           element={
-            <ScriptEditorWrapper 
-              setSelectedScriptId={setSelectedScriptId} 
-              onSaveScript={onSaveScript} 
+            <EditorWrapper
+              onNavigateBack={handleBack}
+              searchTerm={searchTerm}
             />
-          } 
+          }
         />
       </Routes>
     </Box>
