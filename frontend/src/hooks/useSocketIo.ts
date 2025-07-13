@@ -11,8 +11,12 @@ import {
   ClientBlockUpdateEvent,
   ClientBlockDeletedEvent,
   ClientBlockMovedEvent,
+  SocketUser,
+  ServerUserJoinedEvent,
+  ServerUserLeftEvent,
+  ServerActiveUsersEvent,
 } from "@chatroom/shared";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 
 interface UseScriptSocketProps {
@@ -22,6 +26,9 @@ interface UseScriptSocketProps {
   onServerBlockDeleted?: (event: ServerBlockDeletedEvent) => void;
   onServerBlockMoved?: (event: ServerBlocksMovedEvent) => void;
   onServerError?: (error: { message: string; error: string }) => void;
+  onUserJoined?: (event: ServerUserJoinedEvent) => void;
+  onUserLeft?: (event: ServerUserLeftEvent) => void;
+  onActiveUsersUpdate?: (event: ServerActiveUsersEvent) => void;
 }
 
 export const useScriptSocket = ({
@@ -31,12 +38,23 @@ export const useScriptSocket = ({
   onServerBlockDeleted,
   onServerBlockMoved,
   onServerError: onError,
+  onUserJoined,
+  onUserLeft,
+  onActiveUsersUpdate,
 }: UseScriptSocketProps) => {
   console.log("useScriptSocket called with scriptId:", scriptId);
   const socketRef = useRef<Socket | null>(null);
+  const [activeUsers, setActiveUsers] = useState<SocketUser[]>([]);
 
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_BACKEND_URL || "");
+    // Get auth token from localStorage
+    const token = localStorage.getItem('token');
+    
+    socketRef.current = io(import.meta.env.VITE_BACKEND_URL || "", {
+      auth: {
+        token: token
+      }
+    });
     const socket = socketRef.current;
     socket.emit("join_room", scriptId);
 
@@ -58,6 +76,33 @@ export const useScriptSocket = ({
     if (onError) {
       socket.on("server:error", onError);
     }
+
+    // User presence event handlers
+    const handleUserJoined = (event: ServerUserJoinedEvent) => {
+      setActiveUsers(event.activeUsers);
+      if (onUserJoined) {
+        onUserJoined(event);
+      }
+    };
+
+    const handleUserLeft = (event: ServerUserLeftEvent) => {
+      setActiveUsers(event.activeUsers);
+      if (onUserLeft) {
+        onUserLeft(event);
+      }
+    };
+
+    const handleActiveUsers = (event: ServerActiveUsersEvent) => {
+      setActiveUsers(event.activeUsers);
+      if (onActiveUsersUpdate) {
+        onActiveUsersUpdate(event);
+      }
+    };
+
+    socket.on("server:userJoined", handleUserJoined);
+    socket.on("server:userLeft", handleUserLeft);
+    socket.on("server:activeUsers", handleActiveUsers);
+
     return () => {
       console.log("Cleaning up socket connection for scriptId:", scriptId);
       socket.off("server:blockAdded", onServerBlockAdded);
@@ -65,6 +110,10 @@ export const useScriptSocket = ({
       socket.off("server:blockDeleted", onServerBlockDeleted);
       socket.off("server:blocksReordered", onServerBlockMoved);
       socket.off("server:error", onError);
+      socket.off("server:userJoined", handleUserJoined);
+      socket.off("server:userLeft", handleUserLeft);
+      socket.off("server:activeUsers", handleActiveUsers);
+      socket.emit("leave_room", scriptId);
       socket.disconnect();
     };
   }, [
@@ -137,11 +186,18 @@ export const useScriptSocket = ({
     [scriptId]
   );
 
+  const getActiveUsers = useCallback(() => {
+    if (!socketRef.current) return;
+    socketRef.current.emit("getActiveUsers", scriptId);
+  }, [scriptId]);
+
   return {
     addBlockInSocket,
     updateBlockInSocket,
     deleteBlockInSocket,
     moveBlockInSocket,
+    getActiveUsers,
+    activeUsers,
     socket: socketRef.current,
   };
 };

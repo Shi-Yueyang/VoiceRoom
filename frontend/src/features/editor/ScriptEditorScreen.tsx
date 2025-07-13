@@ -3,20 +3,11 @@ import axios from "axios";
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
-  Avatar,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  Divider,
   Button,
 } from "@mui/material";
 
 // Import ScriptContainer component
 import { ScriptContainer } from "../scripts";
-import AddBlockButton from "./AddBlockButton";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useScriptSocket } from "../../hooks/useSocketIo";
 
@@ -26,9 +17,14 @@ import {
   ServerBlockUpdatedEvent,
   ServerBlockDeletedEvent,
   ServerBlocksMovedEvent,
+  ServerUserJoinedEvent,
+  ServerUserLeftEvent,
+  ServerActiveUsersEvent,
 } from "@chatroom/shared";
 
 import { BlockParamUpdates } from "@chatroom/shared/dist/SocketEvents";
+import { AddBlockButton, ActiveUsers } from ".";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface ScriptEditorScreenProps {
   scriptId: string;
@@ -38,30 +34,38 @@ interface ScriptEditorScreenProps {
   onNavigateToUserManagement?: () => void; // Navigate to user management screen
 }
 
+interface Script {
+  _id: string;
+  title: string;
+  creator: string;
+  editors: string[];
+  blocks: ScriptBlock[];
+  lastModified: string;
+  createdAt: string;
+}
+
 const ScriptEditorScreen = ({
   scriptId,
   searchTerm = '',
   onNavigateToUserManagement,
 }: ScriptEditorScreenProps) => {
   const [scriptBlocks, setScriptBlocks] = useState<ScriptBlock[]>([]);
+  const [script, setScript] = useState<Script | null>(null);
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+  const { user } = useAuth();
 
-  // Mock active users data - replace with real data later
-  const [activeUsers] = useState([
-    {
-      id: "1",
-      name: "Sophia",
-      status: "Editing Block 3",
-      avatar: "/avatars/sophia.jpg",
-    },
-    { id: "2", name: "Liam", status: "Viewing", avatar: "/avatars/liam.jpg" },
-    {
-      id: "3",
-      name: "Olivia",
-      status: "Viewing",
-      avatar: "/avatars/olivia.jpg",
-    },
-  ]);
+  // User presence event handlers
+  const onUserJoined = useCallback((event: ServerUserJoinedEvent) => {
+    console.log("User joined:", event.user.username);
+  }, []);
+
+  const onUserLeft = useCallback((event: ServerUserLeftEvent) => {
+    console.log("User left:", event.userId);
+  }, []);
+
+  const onActiveUsersUpdate = useCallback((event: ServerActiveUsersEvent) => {
+    console.log("Active users updated:", event.activeUsers);
+  }, []);
 
   // Wrap socket event handlers in useCallback to prevent unnecessary reconnections
   const onServerBlockAdded = useCallback((event: ServerBlockAddedEvent) => {
@@ -123,12 +127,16 @@ const ScriptEditorScreen = ({
     updateBlockInSocket,
     deleteBlockInSocket,
     moveBlockInSocket,
+    activeUsers,
   } = useScriptSocket({
     scriptId,
     onServerBlockAdded,
     onServerBlockUpdated,
     onServerBlockDeleted,
     onServerBlockMoved,
+    onUserJoined,
+    onUserLeft,
+    onActiveUsersUpdate,
   });
 
   // Fetch script data including title and blocks
@@ -138,6 +146,8 @@ const ScriptEditorScreen = ({
       try {
         const response = await axios.get(`/api/scripts/${scriptId}`);
         if (response.data) {
+          // Store the full script data
+          setScript(response.data);
 
           if (response.data.blocks) {
             // Sort blocks by position to ensure correct order
@@ -386,54 +396,10 @@ const ScriptEditorScreen = ({
             overflowY: "auto",
           }}
         >
-          <Card
-            sx={{
-              margin: 2,
-              boxShadow: "none",
-              border: 1,
-              borderColor: "divider",
-            }}
-          >
-            <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-              <Typography variant="h6" gutterBottom>
-                在线编辑者
-              </Typography>
-              <List disablePadding>
-                {activeUsers.map((user, index) => (
-                  <Box key={user.id}>
-                    <ListItem disablePadding sx={{ py: 1 }}>
-                      <ListItemAvatar>
-                        <Avatar
-                          src={user.avatar}
-                          alt={user.name}
-                          sx={{ width: 40, height: 40 }}
-                        >
-                          {user.name.charAt(0)}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
-                          <Typography variant="subtitle2" fontWeight="medium">
-                            {user.name}
-                          </Typography>
-                        }
-                        secondary={
-                          <Typography variant="caption" color="text.secondary">
-                            {user.status}
-                          </Typography>
-                        }
-                        sx={{ ml: 1 }}
-                      />
-                    </ListItem>
-                    {index < activeUsers.length - 1 && (
-                      <Divider sx={{ mx: 2 }} />
-                    )}
-                  </Box>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-          {onNavigateToUserManagement && (
+          <Box sx={{ m: 2 }}>
+            <ActiveUsers users={activeUsers} currentUserId={user?.id} />
+          </Box>
+          {onNavigateToUserManagement && script && user && script.creator === user.id && (
             <Box sx={{ margin: 2 }}>
               <Button
                 variant="outlined"

@@ -132,3 +132,66 @@ export interface ServerBlocksMovedEvent {
     blockId: string;
     newPosition: number;
 }
+
+// User Presence Events
+
+/**
+ * Interface for user information in socket context
+ */
+export interface SocketUser {
+  userId: string;
+  username: string;
+  email?: string;
+}
+
+/**
+ * Event for when a user joins a room
+ */
+export interface ClientUserJoinedEvent {
+  scriptId: string;
+  user: SocketUser;
+}
+
+/**
+ * Event for when a user leaves a room
+ */
+export interface ClientUserLeftEvent {
+  scriptId: string;
+  userId: string;
+}
+
+/**
+ * Event for notifying clients about user joining
+ */
+export interface ServerUserJoinedEvent {
+  scriptId: string;
+  user: SocketUser;
+  activeUsers: SocketUser[];
+  timestamp: number;
+}
+
+/**
+ * Event for notifying clients about user leaving
+ */
+export interface ServerUserLeftEvent {
+  scriptId: string;
+  userId: string;
+  activeUsers: SocketUser[];
+  timestamp: number;
+}
+
+/**
+ * Event for getting current active users in a room
+ */
+export interface ServerActiveUsersEvent {
+  scriptId: string;
+  activeUsers: SocketUser[];
+  timestamp: number;
+}
+
+/**
+ * Event for requesting active users
+ */
+export interface ClientGetActiveUsersEvent {
+  scriptId: string;
+}

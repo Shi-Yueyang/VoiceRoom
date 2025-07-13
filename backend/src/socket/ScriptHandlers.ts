@@ -11,7 +11,8 @@ import {
   ServerBlockUpdatedEvent,
   ServerBlockDeletedEvent,
   ServerBlockPositionUpdatedEvent,
-  ServerBlocksMovedEvent
+  ServerBlocksMovedEvent,
+  SocketUser
 } from '@chatroom/shared';
 
 /**
@@ -20,6 +21,7 @@ import {
  * @param io The global Socket.IO server instance
  */
 export const registerScriptHandlers = (socket: Socket, io: Server): void => {
+  const user = socket.data.user as SocketUser;
 
   socket.on('client:blockAdded', async (payload: ClientBlockAddedEvent) => {
     console.log('client:blockAdded event received:', payload);
