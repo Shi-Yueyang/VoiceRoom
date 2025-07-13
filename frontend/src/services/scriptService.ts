@@ -33,5 +33,23 @@ export const scriptService = {
   // Delete a script
   deleteScript: async (scriptId: string) => {
     await axios.delete(`/api/scripts/${scriptId}`);
+  },
+
+  // Get script editors
+  getScriptEditors: async (scriptId: string) => {
+    const response = await axios.get(`/api/scripts/${scriptId}/editors`);
+    return response.data;
+  },
+
+  // Add editor to script
+  addEditorToScript: async (scriptId: string, username: string) => {
+    const response = await axios.post(`/api/scripts/${scriptId}/editors`, { username });
+    return response.data;
+  },
+
+  // Remove editor from script
+  removeEditorFromScript: async (scriptId: string, editorId: string) => {
+    const response = await axios.delete(`/api/scripts/${scriptId}/editors/${editorId}`);
+    return response.data;
   }
 };

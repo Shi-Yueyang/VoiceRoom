@@ -2,7 +2,7 @@ import { Routes, Route, Navigate, useParams, useNavigate, useLocation } from 're
 import { Box } from '@mui/material';
 
 import { ScriptListScreen } from '../features/scripts';
-import { ScriptEditorScreen } from '../features/editor';
+import { ScriptEditorScreen, UserManagementScreen } from '../features/editor';
 import { Navigation } from './ui';
 import { useState } from 'react';
 
@@ -22,12 +22,41 @@ const EditorWrapper = ({
   searchTerm: string;
 }) => {
   const { scriptId } = useParams<{ scriptId: string }>();
+  const navigate = useNavigate();
+  
+  const handleNavigateToUserManagement = () => {
+    navigate(`/editor/${scriptId}/users`);
+  };
   
   return (
     <ScriptEditorScreen
       scriptId={scriptId ?? ''}
       onNavigateBack={onNavigateBack}
       hideAppBar={true}
+      searchTerm={searchTerm}
+      onNavigateToUserManagement={handleNavigateToUserManagement}
+    />
+  );
+};
+
+// Wrapper component to handle user management route params
+const UserManagementWrapper = ({
+  searchTerm,
+}: {
+  searchTerm: string;
+  onNavigateBack: () => void;
+}) => {
+  const { scriptId } = useParams<{ scriptId: string }>();
+  const navigate = useNavigate();
+  
+  const handleNavigateBackToEditor = () => {
+    navigate(`/editor/${scriptId}`);
+  };
+  
+  return (
+    <UserManagementScreen
+      scriptId={scriptId ?? ''}
+      onNavigateBack={handleNavigateBackToEditor}
       searchTerm={searchTerm}
     />
   );
@@ -41,7 +70,6 @@ const AppRouter = ({
 }: AppRouterProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const isEditorRoute = location.pathname.startsWith('/editor');
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleBack = () => {
@@ -49,12 +77,23 @@ const AppRouter = ({
     navigate('/', { replace: true });
   };
 
+
+
+  const handleNavigateToScripts = () => {
+    setSelectedScriptId(null);
+    navigate('/', { replace: true });
+  };
+
+
+
+  // Determine if search should be shown (only on script list and script editor, not user management)
+  const showSearch = !location.pathname.includes('/users');
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navigation
-        isEditorMode={isEditorRoute}
-        onNavigateBack={isEditorRoute ? handleBack : undefined}
-        onSearch={setSearchTerm}
+        onSearch={showSearch ? setSearchTerm : undefined}
+        onNavigateToScripts={handleNavigateToScripts}
       />
       <Routes>
         <Route
@@ -77,6 +116,15 @@ const AppRouter = ({
             <EditorWrapper
               onNavigateBack={handleBack}
               searchTerm={searchTerm}
+            />
+          }
+        />
+        <Route
+          path="/editor/:scriptId/users"
+          element={
+            <UserManagementWrapper
+            searchTerm={searchTerm}
+              onNavigateBack={handleBack}
             />
           }
         />

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import User, { IUser } from "../models/User";
+import { AUTH_CONFIG } from "../config/auth";
 
 export interface AuthRequest extends Request {
   user?: IUser;
@@ -19,7 +20,7 @@ export const authenticate = async (
       return;
     }
 
-    const jwtSecret = process.env.JWT_SECRET || "fallback-secret-key";
+    const jwtSecret = AUTH_CONFIG.JWT_SECRET;
     const decoded = jwt.verify(token, jwtSecret) as { id: string };
     const user = await User.findById(decoded.id).select("-passwordHash");
     if (!user) {
@@ -48,7 +49,7 @@ export const optionalAuth = async (
       return;
     }
 
-    const jwtSecret = process.env.JWT_SECRET || "fallback-secret-key";
+    const jwtSecret = AUTH_CONFIG.JWT_SECRET;
     const decoded = jwt.verify(token, jwtSecret) as { id: string };
 
     const user = await User.findById(decoded.id).select("-passwordHash");

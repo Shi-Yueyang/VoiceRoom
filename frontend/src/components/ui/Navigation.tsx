@@ -10,20 +10,27 @@ import {
   styled,
   alpha,
   InputBase,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
+
+import FolderIcon from "@mui/icons-material/Folder";
 import { useAuth } from "../../contexts/AuthContext";
-import scriptEditorIcon from "../../assets/script-editor.svg";
 
 interface NavigationProps {
-  // Editor mode props
-  isEditorMode?: boolean;
-  onNavigateBack?: () => void;
   // Search props
   onSearch?: (searchTerm: string) => void;
   searchPlaceholder?: string;
+  // Navigation props
+  onNavigateToScripts?: () => void;
 }
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -64,14 +71,14 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 const Navigation: React.FC<NavigationProps> = ({
-  isEditorMode = false,
-  onNavigateBack,
   onSearch,
   searchPlaceholder,
+  onNavigateToScripts,
 }) => {
   const { user, logout } = useAuth();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [searchTerm, setSearchTerm] = React.useState("");
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -86,6 +93,19 @@ const Navigation: React.FC<NavigationProps> = ({
     handleMenuClose();
   };
 
+  const handleDrawerOpen = () => {
+    setDrawerOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setDrawerOpen(false);
+  };
+
+  const handleNavigation = (callback?: () => void) => {
+    handleDrawerClose();
+    callback?.();
+  };
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setSearchTerm(value);
@@ -97,76 +117,66 @@ const Navigation: React.FC<NavigationProps> = ({
     onSearch?.("");
   };
 
-  // Determine placeholder text based on mode
-  const placeholder = searchPlaceholder || (isEditorMode ? "Search blocks..." : "Search scripts...");
+  // Determine placeholder text
+  const placeholder = searchPlaceholder || "Search...";
 
   return (
-    <AppBar position="static" sx={{ mb: 2 }}>
-      <Toolbar>
-        <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
-          {isEditorMode ? (
-            // Editor mode: Back button only
+    <>
+      <AppBar position="static" sx={{ mb: 2 }}>
+        <Toolbar>
+          <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+            {/* Menu drawer button */}
             <IconButton
               size="large"
               edge="start"
               color="inherit"
-              aria-label="back"
+              aria-label="menu"
               sx={{ mr: 1 }}
-              onClick={onNavigateBack}
+              onClick={handleDrawerOpen}
             >
-              <ArrowBackIcon />
+              <MenuIcon />
             </IconButton>
-          ) : (
-            // Default mode: Logo only
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <img
-                src={scriptEditorIcon}
-                alt="Script Editor"
-                style={{ width: 24, height: 24 }}
+          </Box>
+          <Box
+            sx={{
+              flex: 1,
+              display: "flex",
+              justifyContent: "center",
+              mx: 4, // Add some margin on the sides
+            }}
+          >
+            <Search sx={{ width: "100%" }}>
+              <SearchIconWrapper>
+                <SearchIcon />
+              </SearchIconWrapper>
+              <StyledInputBase
+                placeholder={placeholder}
+                inputProps={{ "aria-label": "search" }}
+                value={searchTerm}
+                onChange={handleSearchChange}
               />
-            </Box>
-          )}
-        </Box>
-        <Box
-          sx={{
-            flex: 1,
-            display: "flex",
-            justifyContent: "center",
-            mx: 4, // Add some margin on the sides
-          }}
-        >
-          <Search sx={{ width: "100%" }}>
-            <SearchIconWrapper>
-              <SearchIcon />
-            </SearchIconWrapper>
-            <StyledInputBase
-              placeholder={placeholder}
-              inputProps={{ "aria-label": "search" }}
-              value={searchTerm}
-              onChange={handleSearchChange}
-            />
-            {searchTerm && (
-              <IconButton
-                size="small"
-                sx={{
-                  position: "absolute",
-                  right: 8,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "inherit",
-                  opacity: 0.7,
-                  "&:hover": {
-                    opacity: 1,
-                  },
-                }}
-                onClick={handleSearchClear}
-                aria-label="clear search"
-              >
-                <ClearIcon fontSize="small" />
-              </IconButton>
-            )}
-          </Search>
-        </Box>
+              {searchTerm && (
+                <IconButton
+                  size="small"
+                  sx={{
+                    position: "absolute",
+                    right: 8,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "inherit",
+                    opacity: 0.7,
+                    "&:hover": {
+                      opacity: 1,
+                    },
+                  }}
+                  onClick={handleSearchClear}
+                  aria-label="clear search"
+                >
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              )}
+            </Search>
+          </Box>
 
         <Box
           sx={{
@@ -213,6 +223,46 @@ const Navigation: React.FC<NavigationProps> = ({
         </Box>
       </Toolbar>
     </AppBar>
+
+    {/* Navigation Drawer */}
+    <Drawer anchor="left" open={drawerOpen} onClose={handleDrawerClose}>
+      <Box
+        sx={{ 
+          width: 250, 
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+        role="presentation"
+        onClick={handleDrawerClose}
+        onKeyDown={handleDrawerClose}
+      >
+        <List sx={{ flex: 1 }}>
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => handleNavigation(onNavigateToScripts)}>
+              <ListItemIcon>
+                <FolderIcon />
+              </ListItemIcon>
+              <ListItemText primary="Scripts" />
+            </ListItemButton>
+          </ListItem>
+        </List>
+        
+        {user && (
+          <>
+            <Divider />
+            <List>
+              <ListItem disablePadding>
+                <ListItemButton onClick={handleLogout}>
+                  <ListItemText primary="Logout" />
+                </ListItemButton>
+              </ListItem>
+            </List>
+          </>
+        )}
+      </Box>
+    </Drawer>
+  </>
   );
 };
 

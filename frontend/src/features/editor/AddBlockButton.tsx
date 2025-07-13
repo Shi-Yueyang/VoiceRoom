@@ -47,7 +47,7 @@ const AddBlockButton = ({ onAddBlock }: AddBlockButtonProps) => {
         sx={{
           position: "fixed",
           bottom: 16,
-          right: 16,
+          left: 16,
           zIndex: (theme) => theme.zIndex.speedDial,
         }}
       >

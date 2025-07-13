@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import User, { IUser } from "../models/User";
 import { Types } from "mongoose";
 import { validateEmail, validateUsername, validatePassword } from "./validation";
+import { AUTH_CONFIG } from "../config/auth";
 
 export interface LoginCredentials {
   username: string;
@@ -25,12 +26,9 @@ export interface AuthResponse {
 }
 
 export class AuthService {
-  private static readonly JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-key";
-  private static readonly JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
-
   static generateToken(userId: string): string {
-    return jwt.sign({ id: userId }, this.JWT_SECRET, {
-      expiresIn: this.JWT_EXPIRES_IN,
+    return jwt.sign({ id: userId }, AUTH_CONFIG.JWT_SECRET, {
+      expiresIn: AUTH_CONFIG.JWT_EXPIRES_IN,
     } as jwt.SignOptions);
   }
 
@@ -127,7 +125,7 @@ export class AuthService {
 
   static async validateToken(token: string): Promise<IUser | null> {
     try {
-      const decoded = jwt.verify(token, this.JWT_SECRET) as { id: string };
+      const decoded = jwt.verify(token, AUTH_CONFIG.JWT_SECRET) as { id: string };
       const user = await User.findById(decoded.id).select("-passwordHash");
       return user;
     } catch (error) {

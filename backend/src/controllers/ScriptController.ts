@@ -430,6 +430,53 @@ export const addEditorToScript = async (req: AuthRequest, res: Response): Promis
   }
 };
 
+// Remove an editor from a script
+export const removeEditorFromScript = async (req: AuthRequest, res: Response): Promise<any> => {
+  try {
+    const { id, editorId } = req.params;
+    
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const userId = req.user._id;
+    
+    // Check if user has permission to remove editors (only creator can remove editors)
+    const script = await Script.findOne({
+      _id: id,
+      creator: userId // Only creator can remove editors
+    });
+    
+    if (!script) {
+      return res.status(404).json({ error: 'Script not found or access denied. Only the creator can remove editors.' });
+    }
+
+    // Check if the editor exists in the editors list
+    const editorIndex = script.editors.findIndex(editor => editor.equals(editorId));
+    if (editorIndex === -1) {
+      return res.status(404).json({ error: 'Editor not found in this script' });
+    }
+
+    // Remove editor from the list
+    script.editors.splice(editorIndex, 1);
+    script.lastModified = new Date();
+    await script.save();
+
+    // Populate the updated script with editor details
+    const updatedScript = await Script.findById(id)
+      .populate('creator', 'username')
+      .populate('editors', 'username');
+
+    return res.status(200).json({ 
+      message: 'Editor removed successfully',
+      script: updatedScript 
+    });
+  } catch (error) {
+    console.error('Error removing editor:', error);
+    return res.status(500).json({ error: 'Failed to remove editor' });
+  }
+};
+
 export const getEditorsOfScript = async (req: AuthRequest, res: Response): Promise<any> => {
   try{
     const {id} = req.params;

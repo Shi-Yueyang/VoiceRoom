@@ -11,12 +11,12 @@ import {
   ListItemAvatar,
   ListItemText,
   Divider,
+  Button,
 } from "@mui/material";
 
 // Import ScriptContainer component
 import { ScriptContainer } from "../scripts";
 import AddBlockButton from "./AddBlockButton";
-import AddEditorButton from "./AddEditorButton";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useScriptSocket } from "../../hooks/useSocketIo";
 
@@ -35,11 +35,13 @@ interface ScriptEditorScreenProps {
   onNavigateBack: () => void; // Added for back navigation
   hideAppBar?: boolean; // Whether to hide the built-in AppBar
   searchTerm?: string; // Search term for filtering blocks
+  onNavigateToUserManagement?: () => void; // Navigate to user management screen
 }
 
 const ScriptEditorScreen = ({
   scriptId,
   searchTerm = '',
+  onNavigateToUserManagement,
 }: ScriptEditorScreenProps) => {
   const [scriptBlocks, setScriptBlocks] = useState<ScriptBlock[]>([]);
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
@@ -394,7 +396,7 @@ const ScriptEditorScreen = ({
           >
             <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
               <Typography variant="h6" gutterBottom>
-                编辑者
+                在线编辑者
               </Typography>
               <List disablePadding>
                 {activeUsers.map((user, index) => (
@@ -431,13 +433,21 @@ const ScriptEditorScreen = ({
               </List>
             </CardContent>
           </Card>
-          <AddEditorButton
-            scriptId={scriptId}
-            onEditorAdded={(username) => {
-              console.log(`Editor ${username} added successfully`);
-              // Optionally refresh script data or show notification
-            }}
-          />
+          {onNavigateToUserManagement && (
+            <Box sx={{ margin: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={onNavigateToUserManagement}
+                sx={{
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  width: '100%',
+                }}
+              >
+                Manage Users
+              </Button>
+            </Box>
+          )}
         </Box>
       </Box>
     </Box>
