@@ -24,10 +24,12 @@ export type IScriptBlockParams =
 
 // Script block interface
 export interface IScriptBlock {
-  _id: string;
+  _id: Types.ObjectId;
   type: "sceneHeading" | "description" | "dialogue";
   position: number;
   blockParams: IScriptBlockParams;
+  lockedBy?: Types.ObjectId; // User ID who is currently editing this block
+  lockedAt?: Date; // When the block was locked
 }
 
 // Main script interface
@@ -48,6 +50,11 @@ export interface ScriptDocument extends IScript, Document {
   isCreator(userId: Types.ObjectId): boolean;
   isEditor(userId: Types.ObjectId): boolean;
   canEdit(userId: Types.ObjectId): boolean;
+  lockBlock(blockId: Types.ObjectId, userId: Types.ObjectId): Promise<boolean>;
+  unlockBlock(blockId: Types.ObjectId, userId: Types.ObjectId): Promise<boolean>;
+  isBlockLocked(blockId: Types.ObjectId): boolean;
+  isBlockLockedByUser(blockId: Types.ObjectId, userId: Types.ObjectId): boolean;
+  unlockAllBlocksByUser(userId: Types.ObjectId): Promise<void>;
 }
 
 // Model interface for static methods
@@ -59,7 +66,7 @@ export interface ScriptModel extends Model<ScriptDocument> {
 
 // Schema for embedded script blocks
 const scriptBlockSchema = new Schema<IScriptBlock>({
-  _id: { type: String, required: true },
+  _id: { type: Schema.Types.ObjectId, required: true },
   type: {
     type: String,
     required: true,
@@ -67,6 +74,8 @@ const scriptBlockSchema = new Schema<IScriptBlock>({
   },
   position: { type: Number, required: true, default: 0 },
   blockParams: { type: Schema.Types.Mixed, required: true },
+  lockedBy: { type: Schema.Types.ObjectId, ref: "User" },
+  lockedAt: { type: Date },
 });
 
 // Main script schema
@@ -126,6 +135,64 @@ scriptSchema.methods.isEditor = function (userId: Types.ObjectId): boolean {
 // Instance method to check if user can edit (creator or editor)
 scriptSchema.methods.canEdit = function (userId: Types.ObjectId): boolean {
   return this.isCreator(userId) || this.isEditor(userId);
+};
+
+// Instance method to lock a block
+scriptSchema.methods.lockBlock = async function (
+  blockId: Types.ObjectId,
+  userId: Types.ObjectId
+): Promise<boolean> {
+  const block = this.blocks.find((b: IScriptBlock) => b._id === blockId);
+  if (block && !block.lockedBy) {
+    block.lockedBy = userId;
+    block.lockedAt = new Date();
+    await this.save();
+    return true;
+  }
+  return false;
+};
+
+// Instance method to unlock a block
+scriptSchema.methods.unlockBlock = async function (
+  blockId: Types.ObjectId,
+  userId: Types.ObjectId
+): Promise<boolean> {
+  const block = this.blocks.find((b: IScriptBlock) => b._id === blockId);
+  if (block && block.lockedBy?.equals(userId)) {
+    block.lockedBy = undefined;
+    block.lockedAt = undefined;
+    await this.save();
+    return true;
+  }
+  return false;
+};
+
+// Instance method to check if a block is locked
+scriptSchema.methods.isBlockLocked = function (blockId: Types.ObjectId): boolean {
+  const block = this.blocks.find((b: IScriptBlock) => b._id === blockId);
+  return !!block?.lockedBy;
+};
+
+// Instance method to check if a block is locked by a specific user
+scriptSchema.methods.isBlockLockedByUser = function (
+  blockId: Types.ObjectId,
+  userId: Types.ObjectId
+): boolean {
+  const block = this.blocks.find((b: IScriptBlock) => b._id === blockId);
+  return block?.lockedBy?.equals(userId) || false;
+};
+
+// Instance method to unlock all blocks by a user
+scriptSchema.methods.unlockAllBlocksByUser = async function (
+  userId: Types.ObjectId
+): Promise<void> {
+  for (const block of this.blocks) {
+    if (block.lockedBy?.equals(userId)) {
+      block.lockedBy = undefined;
+      block.lockedAt = undefined;
+    }
+  }
+  await this.save();
 };
 
 // Update lastModified on save

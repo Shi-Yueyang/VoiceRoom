@@ -12,6 +12,10 @@ interface CommonBlockProps {
   id: string;
   blockParams: BlockParamTypes;
   isActive: boolean;
+  isLocked?: boolean;
+  isLockedByCurrentUser?: boolean;
+  isDisabled?: boolean;
+  lockedByUsername?: string;
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onUpdate: (blockId: string, updates: BlockParamUpdates) => void;
@@ -70,29 +74,58 @@ const BlockItem = ({ id, type, commonProps }: BlockItemProps) => {
         marginBottom: 2,
         display: "flex",
         alignItems: "stretch",
+        // Visual feedback for locked state
+        opacity: commonProps.isDisabled ? 0.6 : 1,
+        pointerEvents: commonProps.isDisabled ? "none" : "auto",
+        borderLeft: commonProps.isLocked && !commonProps.isLockedByCurrentUser ? 
+          "4px solid" : undefined,
+        borderLeftColor: commonProps.isLocked && !commonProps.isLockedByCurrentUser ? 
+          "warning.main" : undefined,
+        backgroundColor: commonProps.isLocked && !commonProps.isLockedByCurrentUser ? 
+          "warning.light" : undefined,
+        borderRadius: commonProps.isLocked && !commonProps.isLockedByCurrentUser ? 
+          1 : undefined,
       }}
     >
+      {/* Lock indicator */}
+      {commonProps.isLocked && !commonProps.isLockedByCurrentUser && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            backgroundColor: "warning.main",
+            color: "warning.contrastText",
+            borderRadius: 1,
+            px: 1,
+            py: 0.5,
+            fontSize: "0.75rem",
+            zIndex: 10,
+          }}
+        >
+          🔒 {commonProps.lockedByUsername}
+        </Box>
+      )}
+
       {/* Drag handle */}
       <Box
-        {...attributes}
-        {...listeners}
+        {...(commonProps.isDisabled ? {} : attributes)}
+        {...(commonProps.isDisabled ? {} : listeners)}
         sx={{
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           width: "32px",
-          cursor: "grab",
+          cursor: commonProps.isDisabled ? "not-allowed" : "grab",
           color: commonProps.isActive ? "primary.main" : "text.disabled",
           opacity: isDragging || commonProps.isActive ? 1 : 0.3,
           transition: "opacity 0.2s",
           "&:hover": {
-            opacity: 1,
+            opacity: commonProps.isDisabled ? 0.3 : 1,
           },
           "&:active": {
-            cursor: "grabbing",
+            cursor: commonProps.isDisabled ? "not-allowed" : "grabbing",
           },
-          // Hide drag handle for non-interactive/view-only mode if needed
-          // display: isInteractive ? "flex" : "none"
         }}
       >
         <DragIndicatorIcon fontSize="small" />

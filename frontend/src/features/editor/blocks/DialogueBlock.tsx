@@ -13,6 +13,7 @@ interface DialogueBlockProps {
   id: string;
   blockParams: DialogueBlockParam;
   isActive: boolean;
+  isDisabled?: boolean;
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onUpdate: (blockId: string, updates: BlockParamUpdates) => void;
@@ -22,6 +23,7 @@ const DialogueBlock = ({
   id,
   blockParams: dialogueBlockParams,
   isActive,
+  isDisabled = false,
   onSelect,
   onDelete,
   onUpdate,
@@ -36,13 +38,17 @@ const DialogueBlock = ({
   // Handler for clicking on the block
   const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.stopPropagation();
-    onSelect(id);
+    if (!isDisabled) {
+      onSelect(id);
+    }
   };
 
   // Handler for delete button
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent the box click handler from firing
-    onDelete(id);
+    if (!isDisabled) {
+      onDelete(id);
+    }
   };
 
   return (
@@ -55,11 +61,13 @@ const DialogueBlock = ({
         backgroundColor: isActive ? "#e3f2fd" : "#f5f5f5",
         border: isActive ? "2px solid #1976d2" : "1px solid #e0e0e0",
         borderRadius: "4px",
-        cursor: "pointer",
+        cursor: isDisabled ? "not-allowed" : "pointer",
         minHeight: "48px",
         display: "flex",
         alignItems: "flex-start",
         transition: "all 0.2s ease",
+        opacity: isDisabled ? 0.6 : 1,
+        pointerEvents: isDisabled ? "none" : "auto",
         "&:hover": {
           backgroundColor: isActive ? "#e3f2fd" : "#f0f0f0",
         },
@@ -77,7 +85,7 @@ const DialogueBlock = ({
           paddingLeft: { xs: "32px", sm: "40px", md: "60px" },
         }}
       >
-        {isEditing ? (
+        {isEditing && !isDisabled ? (
           <Box sx={{ width: "90%", margin: "0 auto", textAlign: "center" }}>
             <TextField
               fullWidth

@@ -1,3 +1,5 @@
+import {Types} from "mongoose";
+
 /**
  * SocketEvents.ts
  * 
@@ -45,10 +47,12 @@ export type BlockParamUpdates = Partial<BlockParamTypes>;
  * Main interface for a single script block
  */
 export interface ScriptBlock {
-  _id: string;  // unique identifier for the block
+  _id: Types.ObjectId;
   type: 'sceneHeading' | 'description' | 'dialogue';
   position: number;  // determines the order of blocks (higher numbers appear later)
   blockParams: BlockParamTypes;
+  lockedBy?: Types.ObjectId; // User ID who is currently editing this block
+  lockedAt?: Date; // When the block was locked
 }
 
 // Client-to-Server Event Interfaces
@@ -58,7 +62,7 @@ export interface ScriptBlock {
  */
 export interface ClientBlockUpdateEvent {
   scriptId: string;  // ID of the script being edited
-  blockId: string;   // ID of the block being updated
+  blockId: Types.ObjectId;   // ID of the block being updated
   blockParamUpdates: BlockParamUpdates;  // partial object containing only the changed parameters
 }
 
@@ -75,7 +79,7 @@ export interface ClientBlockAddedEvent {
  */
 export interface ClientBlockDeletedEvent {
   scriptId: string;
-  blockId: string;
+  blockId: Types.ObjectId;
 }
 
 /**
@@ -83,13 +87,13 @@ export interface ClientBlockDeletedEvent {
  */
 export interface ClientBlockMovedEvent {
     scriptId: string;
-    blockId: string;
+    blockId: Types.ObjectId;
     newPosition: number;
 }
 
 export interface ServerBlockPositionUpdatedEvent {
     scriptId: string;
-    blockId: string;
+    blockId: Types.ObjectId;
     newPosition: number;  // the new position of the block after reordering
     timestamp: number;  // when the update occurred
 }
@@ -100,7 +104,7 @@ export interface ServerBlockPositionUpdatedEvent {
  */
 export interface ServerBlockUpdatedEvent {
     scriptId: string;
-    blockId: string;
+    blockId: Types.ObjectId;
     blockParamUpdates: BlockParamUpdates;
     timestamp: number;
 }
@@ -120,7 +124,7 @@ export interface ServerBlockAddedEvent {
  */
 export interface ServerBlockDeletedEvent {
   scriptId: string;
-  blockId: string;
+  blockId: Types.ObjectId;
   timestamp: number;
 }
 
@@ -129,7 +133,7 @@ export interface ServerBlockDeletedEvent {
  */
 export interface ServerBlocksMovedEvent {
     scriptId: string;
-    blockId: string;
+    blockId: Types.ObjectId;
     newPosition: number;
 }
 
@@ -194,4 +198,52 @@ export interface ServerActiveUsersEvent {
  */
 export interface ClientGetActiveUsersEvent {
   scriptId: string;
+}
+
+// Block locking events
+
+/**
+ * Event when a client requests to lock a block for editing
+ */
+export interface ClientBlockLockEvent {
+  scriptId: string;
+  blockId: Types.ObjectId;
+}
+
+/**
+ * Event when a client requests to unlock a block
+ */
+export interface ClientBlockUnlockEvent {
+  scriptId: string;
+  blockId: Types.ObjectId;
+}
+
+/**
+ * Server event when a block is successfully locked
+ */
+export interface ServerBlockLockedEvent {
+  scriptId: string;
+  blockId: Types.ObjectId;
+  lockedBy: SocketUser;
+  timestamp: number;
+}
+
+/**
+ * Server event when a block is successfully unlocked
+ */
+export interface ServerBlockUnlockedEvent {
+  scriptId: string;
+  blockId: Types.ObjectId;
+  timestamp: number;
+}
+
+/**
+ * Server event for block lock error
+ */
+export interface ServerBlockLockErrorEvent {
+  scriptId: string;
+  blockId: Types.ObjectId;
+  message: string;
+  lockedBy?: SocketUser;
+  timestamp: number;
 }

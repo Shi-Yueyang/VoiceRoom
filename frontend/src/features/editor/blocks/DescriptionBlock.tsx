@@ -7,16 +7,17 @@ interface DescriptionBlockProps {
   id: string;
   blockParams: DescriptionBlockParam;
   isActive: boolean;
+  isDisabled?: boolean;
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onUpdate: (blockId: string, updates: BlockParamUpdates) => void;
-  
 }
 
 const DescriptionBlock = ({
   id,
   blockParams: descriptionBlockParam,
   isActive,
+  isDisabled = false,
   onSelect,
   onDelete,
   onUpdate
@@ -39,16 +40,17 @@ const DescriptionBlock = ({
   // Handle click on the block
   const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.stopPropagation(); 
-    if (!isEditing) {
+    if (!isEditing && !isDisabled) {
       onSelect(id);
     }
   };
 
-
   // Handle delete with propagation stopped
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent the box click handler from firing
-    onDelete(id);
+    if (!isDisabled) {
+      onDelete(id);
+    }
   };
 
   return (
@@ -61,11 +63,13 @@ const DescriptionBlock = ({
         backgroundColor: isActive ? "#e3f2fd" : "#f5f5f5",
         border: isActive ? "2px solid #1976d2" : "1px solid #e0e0e0",
         borderRadius: "4px",
-        cursor: "pointer",
+        cursor: isDisabled ? "not-allowed" : "pointer",
         minHeight: "48px",
         display: "flex",
         alignItems: "flex-start",
         transition: "all 0.2s ease",
+        opacity: isDisabled ? 0.6 : 1,
+        pointerEvents: isDisabled ? "none" : "auto",
         "&:hover": {
           backgroundColor: isActive ? "#e3f2fd" : "#f0f0f0",
         },
@@ -76,7 +80,7 @@ const DescriptionBlock = ({
         },
       }}
     >
-      {isEditing ? (
+      {isEditing && !isDisabled ? (
         <TextareaAutosize
           value={descriptionBlockParam.text}
           onChange={(e)=>{

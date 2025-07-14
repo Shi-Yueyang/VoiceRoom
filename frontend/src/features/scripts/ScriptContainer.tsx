@@ -16,35 +16,36 @@ import {
 } from "@dnd-kit/sortable";
 
 import { BlockItem } from "../editor";
-import { HeadingBlockParam, DescriptionBlockParam, DialogueBlockParam, BlockParamUpdates } from "@chatroom/shared";
+import { BlockParamUpdates, ScriptBlock } from "@chatroom/shared";
+import { ObjectId } from "bson";
 
-export interface ScriptBlock {
-  _id: string;
-  type:
-    | "sceneHeading"
-    | "description"
-    | "dialogue"
 
-  blockParams: HeadingBlockParam | DescriptionBlockParam | DialogueBlockParam; 
-}
 
 interface ScriptContainerProps {
   scriptBlocks: ScriptBlock[];
-  activeBlockId: string | null;
-  onSelectBlock: (id: string) => void;
-  onDeleteBlock: (id: string) => void;
-  onUpdateBlock: (blockId:string, updates:BlockParamUpdates) => void; 
+  activeBlockId: ObjectId | null;
+  lockedBlocks?: Map<string, { userId: string; username: string }>;
+  currentUserId?: string;
+  onSelectBlock: (id: ObjectId) => void;
+  onDeleteBlock: (id: ObjectId) => void;
+  onUpdateBlock: (blockId: ObjectId, updates: BlockParamUpdates) => void; 
   onRearrangeBlocks: (oldIndex: number, newIndex: number) => void; 
 }
 
 const ScriptContainer = ({
   scriptBlocks,
   activeBlockId,
+  lockedBlocks = new Map(),
+  currentUserId,
   onSelectBlock,
   onDeleteBlock,
   onUpdateBlock, 
   onRearrangeBlocks,
 }: ScriptContainerProps) => {
+  // Debug: Log the blocks to see what we're working with
+  console.log('ScriptContainer received blocks:', scriptBlocks);
+
+
   // Set up drag sensors for mouse, touch, and keyboard
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -63,8 +64,8 @@ const ScriptContainer = ({
 
     // If we have valid over and the items are different
     if (over && active.id !== over.id) {
-      const oldIndex = scriptBlocks.findIndex((item) => item._id === active.id);
-      const newIndex = scriptBlocks.findIndex((item) => item._id === over.id);
+      const oldIndex = scriptBlocks.findIndex((item) => item._id.toString() === active.id);
+      const newIndex = scriptBlocks.findIndex((item) => item._id.toString() === over.id);
 
       onRearrangeBlocks(oldIndex, newIndex);
     }
@@ -78,24 +79,35 @@ const ScriptContainer = ({
     >
       <Box sx={{ padding: 2 }}>
         <SortableContext
-          items={scriptBlocks.map((block) => block._id)}
+          items={scriptBlocks.filter(block => block._id != null).map((block) => block._id.toString())}
           strategy={verticalListSortingStrategy}
         >
-          {scriptBlocks.map((block) => {
-            const isActive = activeBlockId === block._id;
+          {scriptBlocks.filter(block => block._id != null).map((block) => {
+
+            
+            const isActive = activeBlockId?.toString() === block._id.toString();
+            const lockedBy = lockedBlocks.get(block._id.toString());
+            const isLocked = !!lockedBy;
+            const isLockedByCurrentUser = lockedBy?.userId === currentUserId;
+            const isDisabled = isLocked && !isLockedByCurrentUser;
+
             const commonProps = {
-              id: block._id,
+              id: block._id.toString(),
               blockParams: block.blockParams,
               isActive: isActive,
-              onSelect: onSelectBlock,
-              onDelete: onDeleteBlock,
-              onUpdate:onUpdateBlock
+              isLocked: isLocked,
+              isLockedByCurrentUser: isLockedByCurrentUser,
+              isDisabled: isDisabled,
+              lockedByUsername: lockedBy?.username,
+              onSelect: (id: string) => onSelectBlock(new ObjectId(id)),
+              onDelete: (id: string) => onDeleteBlock(new ObjectId(id)),
+              onUpdate: (blockId: string, updates: BlockParamUpdates) => onUpdateBlock(new ObjectId(blockId), updates)
             };
 
             return (
               <BlockItem
-                key={block._id}
-                id={block._id}
+                key={block._id.toString()}
+                id={block._id.toString()}
                 type={block.type}
                 commonProps={commonProps}
               />

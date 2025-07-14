@@ -2,6 +2,7 @@ import { Socket, Server } from 'socket.io';
 import { Types } from 'mongoose';
 const ObjectId = Types.ObjectId;
 import ScriptModel from '../models/Script';
+import User from '../models/User';
 import {
   ClientBlockAddedEvent,
   ClientBlockUpdateEvent,
@@ -10,10 +11,12 @@ import {
   ServerBlockAddedEvent,
   ServerBlockUpdatedEvent,
   ServerBlockDeletedEvent,
-  ServerBlockPositionUpdatedEvent,
   ServerBlocksMovedEvent,
-  SocketUser
+  SocketUser,
+  ClientBlockLockEvent,
+  ClientBlockUnlockEvent
 } from '@chatroom/shared';
+
 
 /**
  * Register all script-related socket event handlers
@@ -29,10 +32,7 @@ export const registerScriptHandlers = (socket: Socket, io: Server): void => {
       const { scriptId, block } = payload;
       
       // Generate a new ObjectId for the block if not provided
-      if (!block._id) {
-        block._id = new ObjectId().toString();
-      }
-      
+
       // Fetch the script document
       const script = await ScriptModel.findById(scriptId);
       if (!script) {
@@ -166,6 +166,69 @@ export const registerScriptHandlers = (socket: Socket, io: Server): void => {
       console.error('Error handling client:blockMoved event:', error);
       socket.emit('server:error', {
         message: 'Failed to move block',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Block locking handlers
+  socket.on('client:blockLock', async (payload: ClientBlockLockEvent) => {
+    try {
+      const { scriptId, blockId } = payload;
+      console.log('client:blockLock event received:', payload);
+      
+      const script = await ScriptModel.findById(scriptId);
+      if (!script) {
+        throw new Error(`Script with ID ${scriptId} not found`);
+      }
+
+      // Check if user can edit this script
+      if (!script.canEdit(new ObjectId(user.userId))) {
+        return;
+      }
+
+      // Try to lock the block
+      const lockSuccess = await script.lockBlock(blockId, new ObjectId(user.userId));
+      
+      if (lockSuccess) {
+        // Broadcast successful lock to all clients in the room
+        io.to(scriptId).emit('server:blockLocked', {
+          scriptId,
+          blockId,
+          lockedBy: user,
+          timestamp: Date.now()
+        });
+      } 
+    } catch (error) {
+      console.error('Error handling client:blockLock event:', error);
+    }
+  });
+
+  socket.on('client:blockUnlock', async (payload: ClientBlockUnlockEvent) => {
+    try {
+      const { scriptId, blockId } = payload;
+      console.log('client:blockUnlock event received:', payload);
+      
+      const script = await ScriptModel.findById(scriptId);
+      if (!script) {
+        throw new Error(`Script with ID ${scriptId} not found`);
+      }
+
+      // Try to unlock the block
+      const unlockSuccess = await script.unlockBlock(blockId, new ObjectId(user.userId));
+      
+      if (unlockSuccess) {
+        // Broadcast successful unlock to all clients in the room
+        io.to(scriptId).emit('server:blockUnlocked', {
+          scriptId,
+          blockId,
+          timestamp: Date.now()
+        });
+      }
+    } catch (error) {
+      console.error('Error handling client:blockUnlock event:', error);
+      socket.emit('server:error', {
+        message: 'Failed to unlock block',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }

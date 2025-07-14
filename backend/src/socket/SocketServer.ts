@@ -2,6 +2,8 @@ import { Server as SocketIOServer, Socket } from "socket.io";
 import { Server as HttpServer } from "http";
 import jwt from "jsonwebtoken";
 import User from "../models/User";
+import Script from "../models/Script";
+import { Types } from "mongoose";
 import { AUTH_CONFIG } from "../config/auth";
 import registerScriptHandlers from "./ScriptHandlers";
 import { SocketUser } from "@chatroom/shared";
@@ -99,16 +101,37 @@ export function InitializeSocketServer(httpServer: HttpServer): SocketIOServer {
   io.use(authenticateSocket);
 
   // Set up periodic cleanup of stale connections
-  const cleanupInterval = setInterval(() => {
-    cleanupStaleConnections();
-  }, 30000); // Clean up every 30 seconds
 
   io.on("connection", (socket: Socket) => {
     const user = socket.data.user as SocketUser;
     console.log(`New authenticated client: ${user.username} (${user.userId})`);
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", async () => {
       console.log(`Client disconnected: ${user.username} (${user.userId})`);
+      
+      // Unlock all blocks that were locked by this user
+      try {
+        const userObjectId = new Types.ObjectId(user.userId);
+        const scripts = await Script.find({ 'blocks.lockedBy': userObjectId });
+        
+        for (const script of scripts) {
+          const scriptId = (script as any)._id.toString();
+          await script.unlockAllBlocksByUser(userObjectId);
+          
+          // Notify other users in the script room about unlocked blocks
+          script.blocks.forEach(block => {
+            if (block.lockedBy?.equals(userObjectId)) {
+              socket.broadcast.to(scriptId).emit("server:blockUnlocked", {
+                scriptId,
+                blockId: block._id,
+                timestamp: Date.now()
+              });
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error unlocking blocks on disconnect:', error);
+      }
       
       // Remove user from all rooms they were in
       Array.from(socket.rooms).forEach(roomId => {

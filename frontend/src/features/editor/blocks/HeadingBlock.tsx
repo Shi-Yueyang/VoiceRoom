@@ -14,8 +14,8 @@ import { BlockParamUpdates, HeadingBlockParam } from "@chatroom/shared";
 interface HeadingBlockProps {
   id: string;
   blockParams: HeadingBlockParam;
-
   isActive: boolean;
+  isDisabled?: boolean;
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onUpdate: (blockId: string, updates: BlockParamUpdates) => void;
@@ -25,6 +25,7 @@ const SceneHeadingBlock = ({
   id,
   blockParams: headingBlockParams,
   isActive,
+  isDisabled = false,
   onSelect,
   onDelete,
   onUpdate,
@@ -44,7 +45,7 @@ const SceneHeadingBlock = ({
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.stopPropagation();
-    if (!isEditing) {
+    if (!isEditing && !isDisabled) {
       onSelect(id);
     }
   };
@@ -52,7 +53,9 @@ const SceneHeadingBlock = ({
   // Handle delete button click
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent the box click handler from firing
-    onDelete(id);
+    if (!isDisabled) {
+      onDelete(id);
+    }
   };
 
   return (
@@ -65,11 +68,13 @@ const SceneHeadingBlock = ({
         backgroundColor: isActive ? "#e3f2fd" : "#f5f5f5",
         border: isActive ? "2px solid #1976d2" : "1px solid #e0e0e0",
         borderRadius: "4px",
-        cursor: "pointer",
+        cursor: isDisabled ? "not-allowed" : "pointer",
         minHeight: "48px", // Ensures good tap target size
         display: "flex",
         alignItems: "center",
         transition: "all 0.2s ease",
+        opacity: isDisabled ? 0.6 : 1,
+        pointerEvents: isDisabled ? "none" : "auto",
         "&:hover": {
           backgroundColor: isActive ? "#e3f2fd" : "#f0f0f0",
         },
@@ -80,7 +85,7 @@ const SceneHeadingBlock = ({
         },
       }}
     >
-      {isEditing ? (
+      {isEditing && !isDisabled ? (
         <Stack spacing={2} sx={{ width: "100%" }}>
           <ToggleButtonGroup
             value={headingBlockParams.intExt}
