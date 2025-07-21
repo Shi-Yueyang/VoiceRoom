@@ -15,27 +15,25 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
-import { BlockItem } from "../editor";
+import { BlockItem } from ".";
 import { BlockParamUpdates, ScriptBlock } from "@chatroom/shared";
-import { ObjectId } from "bson";
 
 
 
 interface ScriptContainerProps {
   scriptBlocks: ScriptBlock[];
-  activeBlockId: ObjectId | null;
+  activeBlockId: string | null;
   lockedBlocks?: Map<string, { userId: string; username: string }>;
   currentUserId?: string;
-  onSelectBlock: (id: ObjectId) => void;
-  onDeleteBlock: (id: ObjectId) => void;
-  onUpdateBlock: (blockId: ObjectId, updates: BlockParamUpdates) => void; 
+  onSelectBlock: (id: string) => void;
+  onDeleteBlock: (id: string) => void;
+  onUpdateBlock: (blockId: string, updates: BlockParamUpdates) => void; 
   onRearrangeBlocks: (oldIndex: number, newIndex: number) => void; 
 }
 
 const ScriptContainer = ({
   scriptBlocks,
   activeBlockId,
-  lockedBlocks = new Map(),
   currentUserId,
   onSelectBlock,
   onDeleteBlock,
@@ -45,7 +43,7 @@ const ScriptContainer = ({
   // Debug: Log the blocks to see what we're working with
   console.log('ScriptContainer received blocks:', scriptBlocks);
 
-
+  
   // Set up drag sensors for mouse, touch, and keyboard
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -83,14 +81,18 @@ const ScriptContainer = ({
           strategy={verticalListSortingStrategy}
         >
           {scriptBlocks.filter(block => block._id != null).map((block) => {
-
             
-            const isActive = activeBlockId?.toString() === block._id.toString();
-            const lockedBy = lockedBlocks.get(block._id.toString());
-            const isLocked = !!lockedBy;
-            const isLockedByCurrentUser = lockedBy?.userId === currentUserId;
+            const isActive = activeBlockId === block._id.toString();
+            const lockedBy = block.lockedBy;
+            const isLocked = !!block.lockedBy;
+            const isLockedByCurrentUser = lockedBy && lockedBy.toString() === currentUserId;
             const isDisabled = isLocked && !isLockedByCurrentUser;
-
+            console.log('Rendering block:', block._id.toString(), {
+              isActive,
+              isLocked,
+              isLockedByCurrentUser,
+              isDisabled,
+            });
             const commonProps = {
               id: block._id.toString(),
               blockParams: block.blockParams,
@@ -98,10 +100,9 @@ const ScriptContainer = ({
               isLocked: isLocked,
               isLockedByCurrentUser: isLockedByCurrentUser,
               isDisabled: isDisabled,
-              lockedByUsername: lockedBy?.username,
-              onSelect: (id: string) => onSelectBlock(new ObjectId(id)),
-              onDelete: (id: string) => onDeleteBlock(new ObjectId(id)),
-              onUpdate: (blockId: string, updates: BlockParamUpdates) => onUpdateBlock(new ObjectId(blockId), updates)
+              onSelect: (id: string) => onSelectBlock(id),
+              onDelete: (id: string) => onDeleteBlock(id),
+              onUpdate: (blockId: string, updates: BlockParamUpdates) => onUpdateBlock(blockId, updates)
             };
 
             return (

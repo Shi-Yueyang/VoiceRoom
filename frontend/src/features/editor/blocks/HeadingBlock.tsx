@@ -31,8 +31,6 @@ const SceneHeadingBlock = ({
   onUpdate,
 }: HeadingBlockProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(isActive);
-
-
   useEffect(() => {
     if (isActive) {
       setIsEditing(true);

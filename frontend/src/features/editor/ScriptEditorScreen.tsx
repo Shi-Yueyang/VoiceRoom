@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 
 // Import ScriptContainer component
-import { ScriptContainer } from "../scripts";
+
 import { arrayMove } from "@dnd-kit/sortable";
 import { useScriptSocket } from "../../hooks/useSocketIo";
 
@@ -23,9 +23,9 @@ import {
 } from "@chatroom/shared";
 
 import { BlockParamUpdates, ServerBlockLockedEvent, ServerBlockLockErrorEvent, ServerBlockUnlockedEvent } from "@chatroom/shared/dist/SocketEvents";
-import { AddBlockButton, ActiveUsers } from ".";
+import { AddBlockButton, ActiveUsers, ScriptContainer } from ".";
 import { useAuth } from "../../contexts/AuthContext";
-import { ObjectId } from "bson";
+import { generateTempId } from "../../utils";
 
 interface ScriptEditorScreenProps {
   scriptId: string;
@@ -52,8 +52,7 @@ const ScriptEditorScreen = ({
 }: ScriptEditorScreenProps) => {
   const [scriptBlocks, setScriptBlocks] = useState<ScriptBlock[]>([]);
   const [script, setScript] = useState<Script | null>(null);
-  const [activeBlockId, setActiveBlockId] = useState<ObjectId | null>(null);
-  const [lockedBlocks, setLockedBlocks] = useState<Map<string, { userId: string; username: string }>>(new Map());
+  const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
   const { user } = useAuth();
 
   // User presence event handlers
@@ -71,20 +70,34 @@ const ScriptEditorScreen = ({
 
   // Block locking event handlers
   const onBlockLocked = useCallback((event: ServerBlockLockedEvent) => {
-    console.log("Block locked:", event);
-    setLockedBlocks(prev => new Map(prev.set(event.blockId.toString(), {
-      userId: event.lockedBy.userId,
-      username: event.lockedBy.username
-    })));
+    console.log("on Block locked:", event);
+    setScriptBlocks(scriptBlocks.map(block =>{
+      if(block._id.toString() === event.blockId.toString()){
+        return {
+          ...block,
+          lockedBy: event.lockedBy.userId as any // Type assertion since we're using string but shared types expect ObjectId
+        };
+      }
+      return block;
+
+    }));
+
   }, []);
 
   const onBlockUnlocked = useCallback((event: ServerBlockUnlockedEvent) => {
     console.log("Block unlocked:", event);
-    setLockedBlocks(prev => {
-      const newMap = new Map(prev);
-      newMap.delete(event.blockId.toString());
-      return newMap;
-    });
+
+    setScriptBlocks(scriptBlocks.map(block=>{
+      if(block._id.equals(event.blockId)){
+        return {
+          ...block,
+          lockedBy: undefined
+        };
+      }
+      return block;
+    }))
+
+
   }, []);
 
   const onBlockLockError = useCallback((event: ServerBlockLockErrorEvent) => {
@@ -179,7 +192,6 @@ const ScriptEditorScreen = ({
         if (response.data) {
           // Store the full script data
           setScript(response.data);
-
           if (response.data.blocks) {
             // Sort blocks by position to ensure correct order
             const sortedBlocks = response.data.blocks.sort(
@@ -197,29 +209,30 @@ const ScriptEditorScreen = ({
   }, [scriptId]);
 
   // --- Event Handlers ---
-  const handleSelectBlock = (blockId: ObjectId) => {
+  const handleSelectBlock = (blockId: string) => {
     // Check if the block is already locked by another user
-    const lockedBy = lockedBlocks.get(blockId.toString());
-    if (lockedBy && lockedBy.userId !== user?.id) {
-      alert(`This block is being edited by ${lockedBy.username}`);
+    const lockedBy = scriptBlocks.find(block=> block._id.toString() === blockId)?.lockedBy;
+
+    if (lockedBy && lockedBy.toString() === user?.id) {
+      alert(`This block is being edited by ${lockedBy}`);
       return;
     }
 
     // If block is not locked by current user, try to lock it
-    if (!lockedBy || lockedBy.userId !== user?.id) {
+    if (!lockedBy || lockedBy.toString() === user?.id) {
       lockBlock(blockId);
     }
 
     setActiveBlockId(blockId);
   };
 
-  const handleDeleteBlock = (blockId: ObjectId) => {
+  const handleDeleteBlock = (blockId: string) => {
     setScriptBlocks((prevBlocks) =>
-      prevBlocks.filter((block) => block._id.toString() !== blockId.toString())
+      prevBlocks.filter((block) => block._id.toString() !== blockId)
     );
 
     // If the deleted block was active, deactivate
-    if (activeBlockId?.toString() === blockId.toString()) {
+    if (activeBlockId === blockId) {
       setActiveBlockId(null);
     }
 
@@ -273,7 +286,7 @@ const ScriptEditorScreen = ({
     }
 
     const newBlock: ScriptBlock = {
-      _id: new ObjectId(),
+      _id: generateTempId() as any, // Generate temporary string ID
       type,
       position: newPosition,
       blockParams,
@@ -281,19 +294,19 @@ const ScriptEditorScreen = ({
 
     // Insert the new block and sort by position
 
-    setActiveBlockId(newBlock._id);
+    setActiveBlockId(newBlock._id.toString());
 
     addBlockInSocket(newBlock); // Assuming no preceding block for simplicity
   };
 
   const handleUpdateBlock = (
-    blockId: ObjectId,
+    blockId: string,
     blockParamUpdates: BlockParamUpdates
   ) => {
     // Check if the block is locked by another user
-    const lockedBy = lockedBlocks.get(blockId.toString());
-    if (lockedBy && lockedBy.userId !== user?.id) {
-      alert(`This block is being edited by ${lockedBy.username}`);
+    const lockedBy = scriptBlocks.find(block=> block._id.toString() === blockId)?.lockedBy;
+    if (lockedBy && lockedBy.toString() === user?.id) {
+      alert(`This block is being edited by ${lockedBy}`);
       return;
     }
 
@@ -340,7 +353,7 @@ const ScriptEditorScreen = ({
         // Only block in the list
         newPosition = 4096;
       }
-      moveBlockInSocket(movedBlock._id, newPosition);
+      moveBlockInSocket(movedBlock._id.toString(), newPosition);
       // Update only the moved block's position
       rearrangedBlocks[newIndex] = {
         ...movedBlock,
@@ -350,7 +363,6 @@ const ScriptEditorScreen = ({
       return rearrangedBlocks;
     });
   };
-
   // Filter blocks based on search term
   const filteredBlocks = scriptBlocks.filter(block => {
     if (!searchTerm.trim()) return true;
@@ -430,7 +442,6 @@ const ScriptEditorScreen = ({
           <ScriptContainer
             scriptBlocks={filteredBlocks}
             activeBlockId={activeBlockId}
-            lockedBlocks={lockedBlocks}
             currentUserId={user?.id}
             onSelectBlock={handleSelectBlock}
             onDeleteBlock={handleDeleteBlock}

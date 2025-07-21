@@ -142,9 +142,10 @@ scriptSchema.methods.lockBlock = async function (
   blockId: Types.ObjectId,
   userId: Types.ObjectId
 ): Promise<boolean> {
-  const block = this.blocks.find((b: IScriptBlock) => b._id === blockId);
+  const block = this.blocks.find((b: IScriptBlock) => b._id.equals(blockId));
+
   if (block && !block.lockedBy) {
-    block.lockedBy = userId;
+    block.lockedBy = userId;  
     block.lockedAt = new Date();
     await this.save();
     return true;
@@ -157,7 +158,7 @@ scriptSchema.methods.unlockBlock = async function (
   blockId: Types.ObjectId,
   userId: Types.ObjectId
 ): Promise<boolean> {
-  const block = this.blocks.find((b: IScriptBlock) => b._id === blockId);
+  const block = this.blocks.find((b: IScriptBlock) => b._id.equals(blockId));
   if (block && block.lockedBy?.equals(userId)) {
     block.lockedBy = undefined;
     block.lockedAt = undefined;

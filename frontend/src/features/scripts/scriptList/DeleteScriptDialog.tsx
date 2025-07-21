@@ -9,7 +9,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { ScriptSummary } from './ScriptItem';
+import { ScriptSummary } from '../../../types';
 
 interface DeleteScriptDialogProps {
   open: boolean;

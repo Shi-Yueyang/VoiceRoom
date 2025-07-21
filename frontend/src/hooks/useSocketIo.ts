@@ -19,7 +19,6 @@ import {
   ServerBlockUnlockedEvent,
   ServerBlockLockErrorEvent,
 } from "@chatroom/shared";
-import { ObjectId } from "bson";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 
@@ -52,7 +51,6 @@ export const useScriptSocket = ({
   onBlockUnlocked,
   onBlockLockError,
 }: UseScriptSocketProps) => {
-  console.log("useScriptSocket called with scriptId:", scriptId);
   const socketRef = useRef<Socket | null>(null);
   const [activeUsers, setActiveUsers] = useState<SocketUser[]>([]);
 
@@ -68,24 +66,11 @@ export const useScriptSocket = ({
     const socket = socketRef.current;
     socket.emit("join_room", scriptId);
 
-    if (onServerBlockAdded) {
-      socket.on("server:blockAdded", onServerBlockAdded);
-    }
-    if (onServerBlockUpdated) {
-      socket.on("server:blockUpdated", onServerBlockUpdated);
-    }
-
-    if (onServerBlockDeleted) {
-      socket.on("server:blockDeleted", onServerBlockDeleted);
-    }
-
-    if (onServerBlockMoved) {
-      socket.on("server:blockMoved", onServerBlockMoved);
-    }
-
-    if (onServerError) {
-      socket.on("server:error", onServerError);
-    }
+    onServerBlockAdded && socket.on("server:blockAdded", onServerBlockAdded);
+    onServerBlockUpdated && socket.on("server:blockUpdated", onServerBlockUpdated);
+    onServerBlockDeleted && socket.on("server:blockDeleted", onServerBlockDeleted);
+    onServerBlockMoved && socket.on("server:blockMoved", onServerBlockMoved);
+    onServerError && socket.on("server:error", onServerError);
 
     // User presence event handlers
     const handleUserJoined = (event: ServerUserJoinedEvent) => {
@@ -113,31 +98,10 @@ export const useScriptSocket = ({
     socket.on("server:userLeft", handleUserLeft);
     socket.on("server:activeUsers", handleActiveUsers);
 
-    // Block locking event handlers
-    const handleBlockLocked = (event: ServerBlockLockedEvent) => {
-      console.log("Block locked:", event);
-      if (onBlockLocked) {
-        onBlockLocked(event);
-      }
-    };
 
-    const handleBlockUnlocked = (event: ServerBlockUnlockedEvent) => {
-      console.log("Block unlocked:", event);
-      if (onBlockUnlocked) {
-        onBlockUnlocked(event);
-      }
-    };
-
-    const handleBlockLockError = (event: ServerBlockLockErrorEvent) => {
-      console.log("Block lock error:", event);
-      if (onBlockLockError) {
-        onBlockLockError(event);
-      }
-    };
-
-    socket.on("server:blockLocked", handleBlockLocked);
-    socket.on("server:blockUnlocked", handleBlockUnlocked);
-    socket.on("server:blockLockError", handleBlockLockError);
+    onBlockLocked && socket.on("server:blockLocked", onBlockLocked);
+    onBlockUnlocked && socket.on("server:blockUnlocked", onBlockUnlocked);
+    onBlockLockError && socket.on("server:blockLockError", onBlockLockError);
 
     return () => {
       console.log("Cleaning up socket connection for scriptId:", scriptId);
@@ -149,9 +113,9 @@ export const useScriptSocket = ({
       socket.off("server:userJoined", handleUserJoined);
       socket.off("server:userLeft", handleUserLeft);
       socket.off("server:activeUsers", handleActiveUsers);
-      socket.off("server:blockLocked", handleBlockLocked);
-      socket.off("server:blockUnlocked", handleBlockUnlocked);
-      socket.off("server:blockLockError", handleBlockLockError);
+      socket.off("server:blockLocked", onBlockLocked);
+      socket.off("server:blockUnlocked", onBlockUnlocked);
+      socket.off("server:blockLockError", onBlockLockError);
       socket.emit("leave_room", scriptId);
       socket.disconnect();
     };
@@ -179,7 +143,7 @@ export const useScriptSocket = ({
 
   const updateBlockInSocket = useCallback(
     (
-      blockId: ObjectId,
+      blockId: string,
       blockParamUpdates: Partial<
         HeadingBlockParam | DescriptionBlockParam | DialogueBlockParam
       >,
@@ -187,7 +151,7 @@ export const useScriptSocket = ({
       if (!socketRef.current) return;
       const payload: ClientBlockUpdateEvent = {
         scriptId,
-        blockId,
+        blockId: blockId as any, // Type assertion since we're using string but shared types expect ObjectId
         blockParamUpdates
       };
       console.log("Emitting client:blockUpdated with payload:", payload);
@@ -197,12 +161,12 @@ export const useScriptSocket = ({
   );
 
   const deleteBlockInSocket = useCallback(
-    (blockId: ObjectId) => {
+    (blockId: string) => {
       if (!socketRef.current) return;
 
       const payload: ClientBlockDeletedEvent = {
         scriptId,
-        blockId,
+        blockId: blockId as any, // Type assertion since we're using string but shared types expect ObjectId
       };
 
       socketRef.current.emit("client:blockDeleted", payload);
@@ -211,12 +175,12 @@ export const useScriptSocket = ({
   );
 
   const moveBlockInSocket = useCallback(
-    (blockId: ObjectId, newPosition:number) => {
+    (blockId: string, newPosition:number) => {
       if (!socketRef.current) return;
 
       const payload: ClientBlockMovedEvent = {
         scriptId,
-        blockId,
+        blockId: blockId as any, // Type assertion since we're using string but shared types expect ObjectId
         newPosition
       };
 
@@ -231,22 +195,22 @@ export const useScriptSocket = ({
   }, [scriptId]);
 
   const lockBlock = useCallback(
-    (blockId: ObjectId) => {
+    (blockId: string) => {
       if (!socketRef.current) return;
       socketRef.current.emit("client:blockLock", {
         scriptId,
-        blockId,
+        blockId: blockId as any, // Type assertion since we're using string but shared types expect ObjectId
       });
     },
     [scriptId]
   );
 
   const unlockBlock = useCallback(
-    (blockId: ObjectId) => {
+    (blockId: string) => {
       if (!socketRef.current) return;
       socketRef.current.emit("client:blockUnlock", {
         scriptId,
-        blockId,
+        blockId: blockId as any, // Type assertion since we're using string but shared types expect ObjectId
       });
     },
     [scriptId]

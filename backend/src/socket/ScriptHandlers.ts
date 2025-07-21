@@ -2,7 +2,6 @@ import { Socket, Server } from 'socket.io';
 import { Types } from 'mongoose';
 const ObjectId = Types.ObjectId;
 import ScriptModel from '../models/Script';
-import User from '../models/User';
 import {
   ClientBlockAddedEvent,
   ClientBlockUpdateEvent,
@@ -189,8 +188,8 @@ export const registerScriptHandlers = (socket: Socket, io: Server): void => {
 
       // Try to lock the block
       const lockSuccess = await script.lockBlock(blockId, new ObjectId(user.userId));
-      
       if (lockSuccess) {
+        console.log(`Block ${blockId} locked by user ${user.username}`);
         // Broadcast successful lock to all clients in the room
         io.to(scriptId).emit('server:blockLocked', {
           scriptId,

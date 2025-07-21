@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { CssBaseline, ThemeProvider } from '@mui/material';
-import AppRouter from './components/AppRouter';
-import { ProtectedRoute } from './features/auth';
-import { AuthProvider } from './contexts/AuthContext';
+
+import { AppRouter } from './components';
+import { AuthProvider, ProtectedRoute } from './features/auth';
 import { theme } from './config/theme';
-import { axios } from './config/api';
 
 const App = () => {
   const [selectedScriptId, setSelectedScriptId] = useState<string | null>(null);
@@ -22,16 +21,6 @@ const App = () => {
     setSelectedScriptId(newScriptId);
   };
 
-  // Handler for saving script
-  const handleSaveScript = async (scriptId: string, data: any) => {
-    try {
-      await axios.put(`/api/scripts/${scriptId}`, { blocks: data });
-      console.log('Script saved successfully');
-    } catch (error) {
-      console.error('Error saving script:', error);
-    }
-  };
-
   console.log('App component rendered with selectedScriptId:', selectedScriptId);
   return (
     <AuthProvider>
@@ -44,7 +33,6 @@ const App = () => {
               setSelectedScriptId={setSelectedScriptId}
               onSelectScript={handleSelectScript}
               onCreateNewScriptSuccess={handleCreateNewScriptSuccess}
-              onSaveScript={handleSaveScript}
             />
           </ProtectedRoute>
         </Router>

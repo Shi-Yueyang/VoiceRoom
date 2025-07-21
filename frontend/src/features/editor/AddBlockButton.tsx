@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { ScriptBlock } from "../scripts/ScriptContainer";
+import { ScriptBlock } from "@chatroom/shared";
 
 
 interface AddBlockButtonProps {

@@ -66,7 +66,6 @@ export const getScriptById = async (req: AuthRequest, res: Response):Promise<any
         { editors: userId }
       ]
     });
-    
     if (!script) {
       return res.status(404).json({ error: 'Script not found or access denied' });
     }
@@ -201,7 +200,7 @@ export const addBlockToScript = async (req: AuthRequest, res: Response):Promise<
 
     // Create new block
     const newBlock: IScriptBlock = {
-      _id: new mongoose.Types.ObjectId().toString(),
+      _id: new mongoose.Types.ObjectId(),
       type,
       position: position ?? script.blocks.length,
       blockParams
@@ -252,7 +251,7 @@ export const removeBlockFromScript = async (req: AuthRequest, res: Response):Pro
       return res.status(404).json({ error: 'Script not found or access denied' });
     }
     
-    const blockIndex = script.blocks.findIndex(block => block._id === blockId);
+    const blockIndex = script.blocks.findIndex(block => block._id.equals(blockId));
     if (blockIndex === -1) {
       return res.status(404).json({ error: 'Block not found in script' });
     }
@@ -299,7 +298,7 @@ export const updateBlockInScript = async (req: AuthRequest, res: Response) :Prom
       return res.status(404).json({ error: 'Script not found or access denied' });
     }
     
-    const blockIndex = script.blocks.findIndex(block => block._id === blockId);
+    const blockIndex = script.blocks.findIndex(block => block._id.equals(blockId));
     if (blockIndex === -1) {
       return res.status(404).json({ error: 'Block not found in script' });
     }
