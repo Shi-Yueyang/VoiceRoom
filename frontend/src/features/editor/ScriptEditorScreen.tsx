@@ -71,7 +71,7 @@ const ScriptEditorScreen = ({
   // Block locking event handlers
   const onBlockLocked = useCallback((event: ServerBlockLockedEvent) => {
     console.log("on Block locked:", event);
-    setScriptBlocks(scriptBlocks.map(block =>{
+    setScriptBlocks(prevBlocks => prevBlocks.map(block =>{
       if(block._id.toString() === event.blockId.toString()){
         return {
           ...block,
@@ -87,16 +87,15 @@ const ScriptEditorScreen = ({
   const onBlockUnlocked = useCallback((event: ServerBlockUnlockedEvent) => {
     console.log("Block unlocked:", event);
 
-    setScriptBlocks(scriptBlocks.map(block=>{
-      if(block._id.equals(event.blockId)){
+    setScriptBlocks(prevBlocks => prevBlocks.map(block=>{
+      if(block._id.toString() === event.blockId.toString()){
         return {
           ...block,
           lockedBy: undefined
         };
       }
       return block;
-    }))
-
+    }));
 
   }, []);
 
@@ -389,7 +388,7 @@ const ScriptEditorScreen = ({
     return false;
   });
 
-
+  console.log("filteredBlocks:",scriptBlocks,filteredBlocks);
   return (
     <Box
       sx={{

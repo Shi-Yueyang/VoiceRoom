@@ -166,7 +166,6 @@ export const deleteScript = async (req: AuthRequest, res: Response):Promise<any>
       return res.status(404).json({ error: 'Script not found or access denied. Only the creator can delete a script.' });
     }
     
-    const deletedScript = await Script.findByIdAndDelete(req.params.id);
     
     return res.status(200).json({ message: 'Script deleted successfully' });
   } catch (error) {
