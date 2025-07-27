@@ -32,8 +32,8 @@ interface UseScriptSocketProps {
   onUserJoined?: (event: ServerUserJoinedEvent) => void;
   onUserLeft?: (event: ServerUserLeftEvent) => void;
   onActiveUsersUpdate?: (event: ServerActiveUsersEvent) => void;
-  onBlockLocked?: (event: ServerBlockLockedEvent) => void;
-  onBlockUnlocked?: (event: ServerBlockUnlockedEvent) => void;
+  onServerBlockLocked?: (event: ServerBlockLockedEvent) => void;
+  onServerBlockLUnlcked?: (event: ServerBlockUnlockedEvent) => void;
   onBlockLockError?: (event: ServerBlockLockErrorEvent) => void;
 }
 
@@ -47,8 +47,8 @@ export const useScriptSocket = ({
   onUserJoined,
   onUserLeft,
   onActiveUsersUpdate,
-  onBlockLocked,
-  onBlockUnlocked,
+  onServerBlockLocked,
+  onServerBlockLUnlcked,
   onBlockLockError,
 }: UseScriptSocketProps) => {
   const socketRef = useRef<Socket | null>(null);
@@ -99,8 +99,8 @@ export const useScriptSocket = ({
     socket.on("server:activeUsers", handleActiveUsers);
 
 
-    onBlockLocked && socket.on("server:blockLocked", onBlockLocked);
-    onBlockUnlocked && socket.on("server:blockUnlocked", onBlockUnlocked);
+    onServerBlockLocked && socket.on("server:blockLocked", onServerBlockLocked);
+    onServerBlockLUnlcked && socket.on("server:blockUnlocked", onServerBlockLUnlcked);
     onBlockLockError && socket.on("server:blockLockError", onBlockLockError);
 
     return () => {
@@ -113,8 +113,8 @@ export const useScriptSocket = ({
       socket.off("server:userJoined", handleUserJoined);
       socket.off("server:userLeft", handleUserLeft);
       socket.off("server:activeUsers", handleActiveUsers);
-      socket.off("server:blockLocked", onBlockLocked);
-      socket.off("server:blockUnlocked", onBlockUnlocked);
+      socket.off("server:blockLocked", onServerBlockLocked);
+      socket.off("server:blockUnlocked", onServerBlockLUnlcked);
       socket.off("server:blockLockError", onBlockLockError);
       socket.emit("leave_room", scriptId);
       socket.disconnect();
@@ -194,7 +194,7 @@ export const useScriptSocket = ({
     socketRef.current.emit("getActiveUsers", scriptId);
   }, [scriptId]);
 
-  const lockBlock = useCallback(
+  const lockBlockInSocket = useCallback(
     (blockId: string) => {
       if (!socketRef.current) return;
       socketRef.current.emit("client:blockLock", {
@@ -205,7 +205,7 @@ export const useScriptSocket = ({
     [scriptId]
   );
 
-  const unlockBlock = useCallback(
+  const unlockBlockInSocket = useCallback(
     (blockId: string) => {
       if (!socketRef.current) return;
       socketRef.current.emit("client:blockUnlock", {
@@ -222,8 +222,8 @@ export const useScriptSocket = ({
     deleteBlockInSocket,
     moveBlockInSocket,
     getActiveUsers,
-    lockBlock,
-    unlockBlock,
+    lockBlockInSocket,
+    unlockBlockInSocket,
     activeUsers,
     socket: socketRef.current,
   };

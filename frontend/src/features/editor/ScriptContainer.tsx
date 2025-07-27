@@ -41,7 +41,6 @@ const ScriptContainer = ({
   onRearrangeBlocks,
 }: ScriptContainerProps) => {
   // Debug: Log the blocks to see what we're working with
-  console.log('ScriptContainer received blocks:', scriptBlocks);
 
   
   // Set up drag sensors for mouse, touch, and keyboard
@@ -87,12 +86,7 @@ const ScriptContainer = ({
             const isLocked = !!block.lockedBy;
             const isLockedByCurrentUser = lockedBy && lockedBy.toString() === currentUserId;
             const isDisabled = isLocked && !isLockedByCurrentUser;
-            console.log('Rendering block:', block._id.toString(), {
-              isActive,
-              isLocked,
-              isLockedByCurrentUser,
-              isDisabled,
-            });
+
             const commonProps = {
               id: block._id.toString(),
               blockParams: block.blockParams,

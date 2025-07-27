@@ -4,6 +4,8 @@ import { Socket, Server } from "socket.io";
 import Script from "../models/Script";
 
 const roomUsers = new Map<string, Map<string, SocketUser>>();
+// Track which rooms each socket is in
+const socketRooms = new Map<string, Set<string>>();
 
 function addUserToRoom(
   roomId: string,
@@ -58,32 +60,6 @@ function getRoomUsers(roomId: string): SocketUser[] {
   return [];
 }
 
-function cleanupStaleConnections(io:Server): void {
-  const connectedSocketIds = new Set(Array.from(io.sockets.sockets.keys()));
-  
-  for (const [roomId, socketMap] of roomUsers.entries()) {
-    const socketsToRemove: string[] = [];
-    
-    for (const [socketId] of socketMap.entries()) {
-      if (!connectedSocketIds.has(socketId)) {
-        socketsToRemove.push(socketId);
-      }
-    }
-    
-    // Remove stale socket IDs
-    for (const socketId of socketsToRemove) {
-      socketMap.delete(socketId);
-      console.log(`Cleaned up stale socket ${socketId} from room ${roomId}`);
-    }
-    
-    // Remove empty rooms
-    if (socketMap.size === 0) {
-      roomUsers.delete(roomId);
-      console.log(`Removed empty room ${roomId}`);
-    }
-  }
-}
-
 
 export const RegisterRoomHandler = (socket: Socket, io: Server): void => {
   const user = socket.data.user as SocketUser;
@@ -101,6 +77,11 @@ export const RegisterRoomHandler = (socket: Socket, io: Server): void => {
     socket.leave(room);
     console.log(`Client ${user.username} left room: ${room}`);
 
+    // Remove from socket room tracking
+    if (socketRooms.has(socket.id)) {
+      socketRooms.get(socket.id)!.delete(room);
+    }
+
     // Remove user from room tracking
     const activeUsers = removeUserFromRoom(room, socket.id);
 
@@ -116,6 +97,12 @@ export const RegisterRoomHandler = (socket: Socket, io: Server): void => {
   socket.on("join_room", (room: string) => {
     socket.join(room);
     console.log(`Client ${user.username} joined room: ${room}`);
+
+    // Track this socket's room membership
+    if (!socketRooms.has(socket.id)) {
+      socketRooms.set(socket.id, new Set());
+    }
+    socketRooms.get(socket.id)!.add(room);
 
     // Add user to room tracking and remove any duplicates
     const activeUsers = addUserToRoom(room, socket.id, user);
@@ -164,18 +151,21 @@ export const RegisterRoomHandler = (socket: Socket, io: Server): void => {
       console.error("Error unlocking blocks on disconnect:", error);
     }
 
+    // Get the rooms this socket was in from our tracking
+    const userRooms = socketRooms.get(socket.id) || new Set();
+    
     // Remove user from all rooms they were in
-    Array.from(socket.rooms).forEach((roomId) => {
-      if (roomId !== socket.id) {
-        // Skip the default room (socket's own ID)
-        const activeUsers = removeUserFromRoom(roomId, socket.id);
-        socket.broadcast.to(roomId).emit("server:userLeft", {
-          scriptId: roomId,
-          userId: user.userId,
-          activeUsers,
-          timestamp: Date.now(),
-        });
-      }
+    userRooms.forEach((roomId) => {
+      const activeUsers = removeUserFromRoom(roomId, socket.id);
+      socket.broadcast.to(roomId).emit("server:userLeft", {
+        scriptId: roomId,
+        userId: user.userId,
+        activeUsers,
+        timestamp: Date.now(),
+      });
     });
+
+    // Clean up socket room tracking
+    socketRooms.delete(socket.id);
   });
 };

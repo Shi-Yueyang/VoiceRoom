@@ -1,10 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import {
-  Box,
-  Typography,
-  Button,
-} from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 
 // Import ScriptContainer component
 
@@ -19,10 +15,14 @@ import {
   ServerBlocksMovedEvent,
   ServerUserJoinedEvent,
   ServerUserLeftEvent,
-  ServerActiveUsersEvent,
 } from "@chatroom/shared";
 
-import { BlockParamUpdates, ServerBlockLockedEvent, ServerBlockLockErrorEvent, ServerBlockUnlockedEvent } from "@chatroom/shared/dist/SocketEvents";
+import {
+  BlockParamUpdates,
+  ServerBlockLockedEvent,
+  ServerBlockLockErrorEvent,
+  ServerBlockUnlockedEvent,
+} from "@chatroom/shared/dist/SocketEvents";
 import { AddBlockButton, ActiveUsers, ScriptContainer } from ".";
 import { useAuth } from "../../contexts/AuthContext";
 import { generateTempId } from "../../utils";
@@ -47,7 +47,7 @@ interface Script {
 
 const ScriptEditorScreen = ({
   scriptId,
-  searchTerm = '',
+  searchTerm = "",
   onNavigateToUserManagement,
 }: ScriptEditorScreenProps) => {
   const [scriptBlocks, setScriptBlocks] = useState<ScriptBlock[]>([]);
@@ -61,43 +61,54 @@ const ScriptEditorScreen = ({
   }, []);
 
   const onUserLeft = useCallback((event: ServerUserLeftEvent) => {
+    setScriptBlocks((prevBlocks) =>
+      prevBlocks.map((block) => {
+        if (block.lockedBy?.toString() === event.userId.toString()) {
+          return {
+            ...block,
+            lockedBy: undefined, // Clear lock if user left
+          };
+        }
+        return block;
+      })
+    );
     console.log("User left:", event.userId);
   }, []);
 
-  const onActiveUsersUpdate = useCallback((event: ServerActiveUsersEvent) => {
-    console.log("Active users updated:", event.activeUsers);
-  }, []);
-
   // Block locking event handlers
-  const onBlockLocked = useCallback((event: ServerBlockLockedEvent) => {
+  const onServerBlockLocked = useCallback((event: ServerBlockLockedEvent) => {
     console.log("on Block locked:", event);
-    setScriptBlocks(prevBlocks => prevBlocks.map(block =>{
-      if(block._id.toString() === event.blockId.toString()){
-        return {
-          ...block,
-          lockedBy: event.lockedBy.userId as any // Type assertion since we're using string but shared types expect ObjectId
-        };
-      }
-      return block;
-
-    }));
-
+    setScriptBlocks((prevBlocks) =>
+      prevBlocks.map((block) => {
+        if (block._id.toString() === event.blockId.toString()) {
+          return {
+            ...block,
+            lockedBy: event.lockedBy.userId as any, // Type assertion since we're using string but shared types expect ObjectId
+          };
+        }
+        return block;
+      })
+    );
   }, []);
 
-  const onBlockUnlocked = useCallback((event: ServerBlockUnlockedEvent) => {
-    console.log("Block unlocked:", event);
+  const onServerBlockLUnlcked = useCallback(
+    (event: ServerBlockUnlockedEvent) => {
+      console.log("Block unlocked:", event);
 
-    setScriptBlocks(prevBlocks => prevBlocks.map(block=>{
-      if(block._id.toString() === event.blockId.toString()){
-        return {
-          ...block,
-          lockedBy: undefined
-        };
-      }
-      return block;
-    }));
-
-  }, []);
+      setScriptBlocks((prevBlocks) =>
+        prevBlocks.map((block) => {
+          if (block._id.toString() === event.blockId.toString()) {
+            return {
+              ...block,
+              lockedBy: undefined,
+            };
+          }
+          return block;
+        })
+      );
+    },
+    []
+  );
 
   const onBlockLockError = useCallback((event: ServerBlockLockErrorEvent) => {
     console.log("Block lock error:", event);
@@ -165,8 +176,8 @@ const ScriptEditorScreen = ({
     updateBlockInSocket,
     deleteBlockInSocket,
     moveBlockInSocket,
-    lockBlock,
-    unlockBlock,
+    lockBlockInSocket,
+    unlockBlockInSocket,
     activeUsers,
   } = useScriptSocket({
     scriptId,
@@ -176,9 +187,8 @@ const ScriptEditorScreen = ({
     onServerBlockMoved,
     onUserJoined,
     onUserLeft,
-    onActiveUsersUpdate,
-    onBlockLocked,
-    onBlockUnlocked,
+    onServerBlockLocked,
+    onServerBlockLUnlcked,
     onBlockLockError,
   });
 
@@ -201,7 +211,7 @@ const ScriptEditorScreen = ({
         }
       } catch (error) {
         console.error("Error fetching script data:", error);
-      } 
+      }
     };
 
     fetchScriptData();
@@ -209,17 +219,25 @@ const ScriptEditorScreen = ({
 
   // --- Event Handlers ---
   const handleSelectBlock = (blockId: string) => {
-    // Check if the block is already locked by another user
-    const lockedBy = scriptBlocks.find(block=> block._id.toString() === blockId)?.lockedBy;
+    // If there's already an active block, unlock it first
+    if (activeBlockId && activeBlockId !== blockId) {
+      console.log("Unlocking previously selected block:", activeBlockId);
+      unlockBlockInSocket(activeBlockId);
+    }
 
-    if (lockedBy && lockedBy.toString() === user?.id) {
-      alert(`This block is being edited by ${lockedBy}`);
+    // Check if the block is already locked by another user
+    const lockedBy = scriptBlocks.find(
+      (block) => block._id.toString() === blockId
+    )?.lockedBy;
+
+    if (lockedBy && lockedBy.toString() !== user?.id) {
+      alert(`This block is being edited by another user`);
       return;
     }
 
-    // If block is not locked by current user, try to lock it
+    // If block is not locked or locked by current user, try to lock it
     if (!lockedBy || lockedBy.toString() === user?.id) {
-      lockBlock(blockId);
+      lockBlockInSocket(blockId);
     }
 
     setActiveBlockId(blockId);
@@ -303,9 +321,11 @@ const ScriptEditorScreen = ({
     blockParamUpdates: BlockParamUpdates
   ) => {
     // Check if the block is locked by another user
-    const lockedBy = scriptBlocks.find(block=> block._id.toString() === blockId)?.lockedBy;
-    if (lockedBy && lockedBy.toString() === user?.id) {
-      alert(`This block is being edited by ${lockedBy}`);
+    const lockedBy = scriptBlocks.find(
+      (block) => block._id.toString() === blockId
+    )?.lockedBy;
+    if (lockedBy && lockedBy.toString() !== user?.id) {
+      alert(`This block is being edited by another user`);
       return;
     }
 
@@ -363,22 +383,22 @@ const ScriptEditorScreen = ({
     });
   };
   // Filter blocks based on search term
-  const filteredBlocks = scriptBlocks.filter(block => {
+  const filteredBlocks = scriptBlocks.filter((block) => {
     if (!searchTerm.trim()) return true;
     const searchLower = searchTerm.toLowerCase();
-    
+
     // Search in block content based on block type
-    if (block.type === 'sceneHeading') {
+    if (block.type === "sceneHeading") {
       const params = block.blockParams as any;
       return (
         params.intExt?.toLowerCase().includes(searchLower) ||
         params.location?.toLowerCase().includes(searchLower) ||
         params.time?.toLowerCase().includes(searchLower)
       );
-    } else if (block.type === 'description') {
+    } else if (block.type === "description") {
       const params = block.blockParams as any;
       return params.text?.toLowerCase().includes(searchLower);
-    } else if (block.type === 'dialogue') {
+    } else if (block.type === "dialogue") {
       const params = block.blockParams as any;
       return (
         params.characterName?.toLowerCase().includes(searchLower) ||
@@ -388,23 +408,21 @@ const ScriptEditorScreen = ({
     return false;
   });
 
-  console.log("filteredBlocks:",scriptBlocks,filteredBlocks);
   return (
     <Box
       sx={{
         display: "flex",
         flexDirection: "column",
-        height:  "100vh"
+        height: "100vh",
       }}
       onClick={() => {
-        // Unlock active block when clicking outside
         if (activeBlockId) {
-          unlockBlock(activeBlockId);
+          console.log("Unlocking block:", activeBlockId);
+          unlockBlockInSocket(activeBlockId);
         }
         setActiveBlockId(null);
       }}
     >
-
       {/* Main Content Area */}
       <Box
         sx={{
@@ -424,18 +442,23 @@ const ScriptEditorScreen = ({
             paddingBottom: "80px", // Space for FAB
           }}
         >
-
           {/* No search results message */}
-          {searchTerm.trim() && filteredBlocks.length === 0 && scriptBlocks.length > 0 && (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography variant="h6" color="text.secondary">
-                No blocks found matching "{searchTerm}"
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Try adjusting your search terms
-              </Typography>
-            </Box>
-          )}
+          {searchTerm.trim() &&
+            filteredBlocks.length === 0 &&
+            scriptBlocks.length > 0 && (
+              <Box sx={{ textAlign: "center", py: 4 }}>
+                <Typography variant="h6" color="text.secondary">
+                  No blocks found matching "{searchTerm}"
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 1 }}
+                >
+                  Try adjusting your search terms
+                </Typography>
+              </Box>
+            )}
 
           {/* Script Container */}
           <ScriptContainer
@@ -465,21 +488,24 @@ const ScriptEditorScreen = ({
           <Box sx={{ m: 2 }}>
             <ActiveUsers users={activeUsers} currentUserId={user?.id} />
           </Box>
-          {onNavigateToUserManagement && script && user && script.creator === user.id && (
-            <Box sx={{ margin: 2 }}>
-              <Button
-                variant="outlined"
-                onClick={onNavigateToUserManagement}
-                sx={{
-                  textTransform: 'none',
-                  borderRadius: 2,
-                  width: '100%',
-                }}
-              >
-                Manage Users
-              </Button>
-            </Box>
-          )}
+          {onNavigateToUserManagement &&
+            script &&
+            user &&
+            script.creator === user.id && (
+              <Box sx={{ margin: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={onNavigateToUserManagement}
+                  sx={{
+                    textTransform: "none",
+                    borderRadius: 2,
+                    width: "100%",
+                  }}
+                >
+                  Manage Users
+                </Button>
+              </Box>
+            )}
         </Box>
       </Box>
     </Box>

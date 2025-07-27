@@ -217,7 +217,6 @@ export const registerScriptHandlers = (socket: Socket, io: Server): void => {
       const unlockSuccess = await script.unlockBlock(blockId, new ObjectId(user.userId));
       
       if (unlockSuccess) {
-        // Broadcast successful unlock to all clients in the room
         io.to(scriptId).emit('server:blockUnlocked', {
           scriptId,
           blockId,
