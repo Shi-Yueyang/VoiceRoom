@@ -1,10 +1,11 @@
 import { Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { Box, useTheme, useMediaQuery } from '@mui/material';
 
 import { ScriptListScreen } from '../features/scripts';
 import { ScriptEditorScreen, UserManagementScreen } from '../features/editor';
+import { GroupsScreen } from '../features/groups';
 import { Navigation } from './ui';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface AppRouterProps {
   selectedScriptId: string | null;
@@ -70,7 +71,10 @@ const AppRouter = ({
 }: AppRouterProps) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up('md'));
   const [searchTerm, setSearchTerm] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(true); // Default open on large screens
 
   const handleBack = () => {
     setSelectedScriptId(null);
@@ -84,9 +88,27 @@ const AppRouter = ({
     navigate('/', { replace: true });
   };
 
+  const handleNavigateToGroups = () => {
+    setSelectedScriptId(null);
+    navigate('/groups', { replace: true });
+  };
+
+  const handleSidebarToggle = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  // Close sidebar on small screens
+  useEffect(() => {
+    if (!isLargeScreen) {
+      setSidebarOpen(false);
+    } else {
+      setSidebarOpen(true);
+    }
+  }, [isLargeScreen]);
 
 
-  // Determine if search should be shown (only on script list and script editor, not user management)
+
+  // Determine if search should be shown (on script list, groups, and script editor, not user management)
   const showSearch = !location.pathname.includes('/users');
 
   return (
@@ -94,8 +116,23 @@ const AppRouter = ({
       <Navigation
         onSearch={showSearch ? setSearchTerm : undefined}
         onNavigateToScripts={handleNavigateToScripts}
+        onNavigateToGroups={handleNavigateToGroups}
+        sidebarOpen={sidebarOpen}
+        onSidebarToggle={handleSidebarToggle}
       />
-      <Routes>
+      <Box
+        sx={{
+          display: 'flex',
+          flex: 1,
+          ml: isLargeScreen && sidebarOpen ? '250px' : 0,
+          transition: theme.transitions.create(['margin'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.enteringScreen,
+          }),
+        }}
+      >
+        <Box sx={{ flex: 1, overflow: 'auto' }}>
+          <Routes>
         <Route
           path="/"
           element={
@@ -109,6 +146,10 @@ const AppRouter = ({
               />
             )
           }
+        />
+        <Route
+          path="/groups"
+          element={<GroupsScreen searchTerm={searchTerm} />}
         />
         <Route
           path="/editor/:scriptId"
@@ -129,6 +170,8 @@ const AppRouter = ({
           }
         />
       </Routes>
+        </Box>
+      </Box>
     </Box>
   );
 };

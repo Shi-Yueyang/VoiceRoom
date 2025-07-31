@@ -16,14 +16,19 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Divider,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
+import LogoutIcon from "@mui/icons-material/Logout";
+import GroupIcon from "@mui/icons-material/Group";
 
 import FolderIcon from "@mui/icons-material/Folder";
 import { useAuth } from "../../contexts/AuthContext";
+
+const SIDEBAR_WIDTH = 250;
 
 interface NavigationProps {
   // Search props
@@ -31,6 +36,10 @@ interface NavigationProps {
   searchPlaceholder?: string;
   // Navigation props
   onNavigateToScripts?: () => void;
+  onNavigateToGroups?: () => void;
+  // Sidebar props
+  sidebarOpen?: boolean;
+  onSidebarToggle?: () => void;
 }
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -74,11 +83,16 @@ const Navigation: React.FC<NavigationProps> = ({
   onSearch,
   searchPlaceholder,
   onNavigateToScripts,
+  onNavigateToGroups,
+  sidebarOpen = false,
+  onSidebarToggle,
 }) => {
   const { user, logout } = useAuth();
+  const theme = useTheme();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up('md'));
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = React.useState(false);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -93,16 +107,18 @@ const Navigation: React.FC<NavigationProps> = ({
     handleMenuClose();
   };
 
-  const handleDrawerOpen = () => {
-    setDrawerOpen(true);
-  };
-
-  const handleDrawerClose = () => {
-    setDrawerOpen(false);
+  const handleDrawerToggle = () => {
+    if (isLargeScreen) {
+      onSidebarToggle?.();
+    } else {
+      setMobileDrawerOpen(true);
+    }
   };
 
   const handleNavigation = (callback?: () => void) => {
-    handleDrawerClose();
+    if (!isLargeScreen) {
+      setMobileDrawerOpen(false);
+    }
     callback?.();
   };
 
@@ -120,23 +136,198 @@ const Navigation: React.FC<NavigationProps> = ({
   // Determine placeholder text
   const placeholder = searchPlaceholder || "Search...";
 
+  // Sidebar content component
+  const SidebarContent = ({ onItemClick }: { onItemClick?: () => void }) => (
+    <Box
+      sx={{ 
+        width: SIDEBAR_WIDTH, 
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: 'background.paper',
+      }}
+    >
+      {/* Header section - matches YouTube's spacing */}
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center',
+        px: 2,
+        py: 1.5,
+        minHeight: 56, // Match typical header height
+      }}>
+        <IconButton
+          onClick={() => {
+            if (isLargeScreen) {
+              onSidebarToggle?.();
+            } else {
+              onItemClick?.();
+            }
+          }}
+          size="medium"
+          aria-label="close sidebar"
+          sx={{ 
+            mr: 2,
+            '&:hover': {
+              bgcolor: 'action.hover',
+            }
+          }}
+        >
+          <MenuIcon />
+        </IconButton>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          gap: 1 
+        }}>
+          {/* App branding - similar to YouTube logo placement */}
+          <Box sx={{ 
+            fontWeight: 600, 
+            fontSize: '1.1rem',
+            color: 'text.primary',
+            letterSpacing: '-0.5px'
+          }}>
+            ScriptApp
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Navigation items */}
+      <Box sx={{ flex: 1, py: 1 }}>
+        <List sx={{ padding: 0 }}>
+          <ListItem disablePadding>
+            <ListItemButton 
+              onClick={() => {
+                onItemClick?.();
+                handleNavigation(onNavigateToScripts);
+              }}
+              sx={{
+                px: 3,
+                py: 1.5,
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                },
+                borderRadius: 0,
+              }}
+            >
+              <ListItemIcon sx={{ 
+                minWidth: 40,
+                color: 'text.primary'
+              }}>
+                <FolderIcon fontSize="medium" />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Scripts" 
+                primaryTypographyProps={{
+                  fontSize: '0.875rem',
+                  fontWeight: 400,
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton 
+              onClick={() => {
+                onItemClick?.();
+                handleNavigation(onNavigateToGroups);
+              }}
+              sx={{
+                px: 3,
+                py: 1.5,
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                },
+                borderRadius: 0,
+              }}
+            >
+              <ListItemIcon sx={{ 
+                minWidth: 40,
+                color: 'text.primary'
+              }}>
+                <GroupIcon fontSize="medium" />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Groups" 
+                primaryTypographyProps={{
+                  fontSize: '0.875rem',
+                  fontWeight: 400,
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </Box>
+      
+      {/* Bottom section for user actions */}
+      {user && (
+        <Box sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
+          <List sx={{ padding: 0 }}>
+            <ListItem disablePadding>
+              <ListItemButton 
+                onClick={() => {
+                  onItemClick?.();
+                  handleLogout();
+                }}
+                sx={{
+                  px: 3,
+                  py: 1.5,
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                  },
+                  borderRadius: 0,
+                }}
+              >
+                <ListItemIcon sx={{ 
+                  minWidth: 40,
+                  color: 'text.primary'
+                }}>
+                  <LogoutIcon fontSize="medium" />
+                </ListItemIcon>
+                <ListItemText 
+                  primary="Logout" 
+                  primaryTypographyProps={{
+                    fontSize: '0.875rem',
+                    fontWeight: 400,
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          </List>
+        </Box>
+      )}
+    </Box>
+  );
+
   return (
     <>
-      <AppBar position="static" sx={{ mb: 2 }}>
+      <AppBar 
+        position="static" 
+        sx={{ 
+          mb: 2,
+          ml: isLargeScreen && sidebarOpen ? `${SIDEBAR_WIDTH}px` : 0,
+          width: isLargeScreen && sidebarOpen ? `calc(100% - ${SIDEBAR_WIDTH}px)` : '100%',
+          transition: theme.transitions.create(['width', 'margin'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.enteringScreen,
+          }),
+          zIndex: theme.zIndex.drawer + 1, // Ensure AppBar stays above sidebar
+        }}
+      >
         <Toolbar>
-          <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
-            {/* Menu drawer button */}
-            <IconButton
-              size="large"
-              edge="start"
-              color="inherit"
-              aria-label="menu"
-              sx={{ mr: 1 }}
-              onClick={handleDrawerOpen}
-            >
-              <MenuIcon />
-            </IconButton>
-          </Box>
+          {/* Only show menu button when sidebar/drawer is closed */}
+          {(isLargeScreen ? !sidebarOpen : !mobileDrawerOpen) && (
+            <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+              <IconButton
+                size="large"
+                edge="start"
+                color="inherit"
+                aria-label="menu"
+                sx={{ mr: 1 }}
+                onClick={handleDrawerToggle}
+              >
+                <MenuIcon />
+              </IconButton>
+            </Box>
+          )}
           <Box
             sx={{
               flex: 1,
@@ -145,37 +336,39 @@ const Navigation: React.FC<NavigationProps> = ({
               mx: 4, // Add some margin on the sides
             }}
           >
-            <Search sx={{ width: "100%" }}>
-              <SearchIconWrapper>
-                <SearchIcon />
-              </SearchIconWrapper>
-              <StyledInputBase
-                placeholder={placeholder}
-                inputProps={{ "aria-label": "search" }}
-                value={searchTerm}
-                onChange={handleSearchChange}
-              />
-              {searchTerm && (
-                <IconButton
-                  size="small"
-                  sx={{
-                    position: "absolute",
-                    right: 8,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "inherit",
-                    opacity: 0.7,
-                    "&:hover": {
-                      opacity: 1,
-                    },
-                  }}
-                  onClick={handleSearchClear}
-                  aria-label="clear search"
-                >
-                  <ClearIcon fontSize="small" />
-                </IconButton>
-              )}
-            </Search>
+            {onSearch && (
+              <Search sx={{ width: "100%" }}>
+                <SearchIconWrapper>
+                  <SearchIcon />
+                </SearchIconWrapper>
+                <StyledInputBase
+                  placeholder={placeholder}
+                  inputProps={{ "aria-label": "search" }}
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                />
+                {searchTerm && (
+                  <IconButton
+                    size="small"
+                    sx={{
+                      position: "absolute",
+                      right: 8,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "inherit",
+                      opacity: 0.7,
+                      "&:hover": {
+                        opacity: 1,
+                      },
+                    }}
+                    onClick={handleSearchClear}
+                    aria-label="clear search"
+                  >
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                )}
+              </Search>
+            )}
           </Box>
 
         <Box
@@ -224,44 +417,51 @@ const Navigation: React.FC<NavigationProps> = ({
       </Toolbar>
     </AppBar>
 
-    {/* Navigation Drawer */}
-    <Drawer anchor="left" open={drawerOpen} onClose={handleDrawerClose}>
-      <Box
-        sx={{ 
-          width: 250, 
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column'
+    {/* Persistent Sidebar for large screens */}
+    {isLargeScreen && (
+      <Drawer
+        variant="persistent"
+        anchor="left"
+        open={sidebarOpen}
+        sx={{
+          width: sidebarOpen ? SIDEBAR_WIDTH : 0,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: SIDEBAR_WIDTH,
+            boxSizing: 'border-box',
+            top: 0,
+            height: '100vh',
+            position: 'fixed',
+            zIndex: theme.zIndex.drawer,
+            border: 'none',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          },
         }}
-        role="presentation"
-        onClick={handleDrawerClose}
-        onKeyDown={handleDrawerClose}
       >
-        <List sx={{ flex: 1 }}>
-          <ListItem disablePadding>
-            <ListItemButton onClick={() => handleNavigation(onNavigateToScripts)}>
-              <ListItemIcon>
-                <FolderIcon />
-              </ListItemIcon>
-              <ListItemText primary="Scripts" />
-            </ListItemButton>
-          </ListItem>
-        </List>
-        
-        {user && (
-          <>
-            <Divider />
-            <List>
-              <ListItem disablePadding>
-                <ListItemButton onClick={handleLogout}>
-                  <ListItemText primary="Logout" />
-                </ListItemButton>
-              </ListItem>
-            </List>
-          </>
-        )}
-      </Box>
-    </Drawer>
+        <SidebarContent />
+      </Drawer>
+    )}
+
+    {/* Mobile Drawer for small screens */}
+    {!isLargeScreen && (
+      <Drawer 
+        anchor="left" 
+        open={mobileDrawerOpen} 
+        onClose={() => setMobileDrawerOpen(false)}
+        ModalProps={{
+          keepMounted: true, // Better open performance on mobile.
+        }}
+        sx={{
+          '& .MuiDrawer-paper': {
+            width: SIDEBAR_WIDTH,
+            border: 'none',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+          },
+        }}
+      >
+        <SidebarContent onItemClick={() => setMobileDrawerOpen(false)} />
+      </Drawer>
+    )}
   </>
   );
 };
